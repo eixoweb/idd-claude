@@ -27,11 +27,15 @@ for the group. Nothing else is available to you, and you must not go looking.
 4. **Score `code`** (0-100): from the residual MEDIUM and LOW findings of the
    review in step 1.
 
-5. **Score `visual`** if the dimension is enabled: **re-run** the assertions
-   declared in the group's VISUAL tasks yourself, through dev-browser. Never
-   read the result the implementation session claimed. 100 only if every
-   assertion holds. If the dev stack cannot be started, report `"UNKNOWN"` —
-   not 0. A broken environment is not a broken implementation.
+5. **Score `visual`** if the dimension is enabled: for every VISUAL task in the
+   group, **re-run** its assertions yourself — never read the result the
+   implementation session claimed. For each task, pass its assertion lines to:
+
+   `node "${CLAUDE_PLUGIN_ROOT}/scripts/visual-cli.mjs" '<lines as JSON array>' <baseUrl>`
+
+   The dimension's score is the mean of the per-task scores. If any invocation
+   returns `"UNKNOWN"`, report `"UNKNOWN"` for the whole dimension — not 0. A
+   broken environment is not a broken implementation.
 
 6. **Score `mutation`** if enabled: run the mutation tool scoped to the
    group's changed files. Report the mutation score. If the tool cannot run,
