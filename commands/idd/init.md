@@ -25,3 +25,19 @@ Set up this project for the idd-claude workflow.
 
 Never edit files under `openspec/schemas/idd-claude/` in a target project:
 they are a copy, and the next promotion overwrites them.
+
+## Optional: acceptance scaffolding
+
+When the user passes `--acceptance`, or turns on `verification.spec_as_source`,
+set the project up for executable Gherkin:
+
+1. Read `skills/acceptance-test-authoring/references/javascript/SETUP.md` and
+   follow it for the stack recorded in `openspec/config.yaml`.
+2. Copy `references/javascript/cucumber.cjs` to the project root and install
+   `@cucumber/cucumber` as a dev dependency.
+3. Create `acceptance-tests/steps/` for the step definitions, and add
+   `acceptance-tests/.extracted/` and `acceptance-tests/report.json` to
+   `.gitignore` — both are regenerated on every run.
+
+Do not hand-write `.feature` files: they are extracted from the specs, and
+anything written by hand there is overwritten on the next run.

@@ -50,8 +50,18 @@ for the group. Nothing else is available to you, and you must not go looking.
    have caught the bug. Phrase the findings that way, and generate fix tasks
    that add or strengthen tests rather than tasks that change behaviour.
 
-7. **Score `acceptance`** if enabled: run the acceptance suite. 100 only if
-   every scenario passes.
+7. **Score `acceptance`** if the dimension is enabled — it is exactly when
+   `spec_as_source: true`. Run:
+
+   `node "${CLAUDE_PLUGIN_ROOT}/scripts/acceptance-cli.mjs" .`
+
+   It re-extracts the `.feature` files from the specs before running, so a
+   stale extraction can never be what you score. Report the number it prints,
+   or `"UNKNOWN"` if it returns that.
+
+   A failing scenario is a gap between the spec and the code. Say which of the
+   two is wrong in your findings: fixing the code and fixing the spec are very
+   different fix tasks.
 
 8. **Check the REFACTOR rule.** If the group contains a REFACTOR task whose
    diff modifies any test assertion, behaviour changed under cover of

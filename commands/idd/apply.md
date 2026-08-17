@@ -13,6 +13,9 @@ be evaluated, and **refuse to start** if one cannot:
 - `visual: true` but `dev-browser` is not on PATH, or
   `project.dev_stack_command` is empty → stop, say which is missing.
 - `mutation: true` but no `stryker.config.json` in the project → stop, say so.
+- `spec_as_source: true` but `acceptance-tests/` is missing, or `cucumber-js`
+  is not installed in the project → stop, say which. Run `/idd:init --acceptance`
+  to scaffold it.
 - `runtime: true` (the default) but `project.test_commands` is empty → stop.
   Either configure the commands, or set `runtime: false` to record that this
   project has no test suite. Do not proceed with the dimension enabled and
