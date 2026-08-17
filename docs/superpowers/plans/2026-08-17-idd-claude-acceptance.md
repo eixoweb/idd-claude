@@ -32,7 +32,7 @@
 
 **Ce que les survivants révèlent.** Les tests actuels de `tasks.mjs` nourrissent le parseur d'entrées bien formées et vérifient ce qu'il **accepte**. Les mutants qui survivent sont des relâchements de frontières de regex — donc rien ne vérifie ce qu'il **rejette**. Pour `openspec-version.mjs`, les 9 `NoCoverage` sont le corps de `defaultRun`, jamais exécuté puisque les tests injectent toujours un `run` factice.
 
-- [ ] **Step 1: Écrire les tests de rejet du parseur**
+- [x] **Step 1: Écrire les tests de rejet du parseur**
 
 Ajouter à `tests/tasks.test.mjs` :
 
@@ -104,7 +104,7 @@ test('a keyword is matched exactly, not as a prefix', () => {
 })
 ```
 
-- [ ] **Step 2: Écrire le test d'intégration de la détection de version**
+- [x] **Step 2: Écrire le test d'intégration de la détection de version**
 
 Ajouter à `tests/openspec-version.test.mjs` :
 
@@ -120,7 +120,7 @@ test('detectOpenspec finds the real CLI when no runner is injected', () => {
 })
 ```
 
-- [ ] **Step 3: Lancer la suite**
+- [x] **Step 3: Lancer la suite**
 
 ```bash
 npm test
@@ -128,7 +128,7 @@ npm test
 
 Attendu : tous verts. Un échec du test d'intégration signifie qu'`openspec` n'est pas sur le PATH ou est trop ancien — c'est un prérequis du projet, pas un défaut du test.
 
-- [ ] **Step 4: Mesurer le gain**
+- [x] **Step 4: Mesurer le gain**
 
 ```bash
 ./node_modules/.bin/stryker run
@@ -136,7 +136,7 @@ Attendu : tous verts. Un échec du test d'intégration signifie qu'`openspec` n'
 
 Attendu : `tasks.mjs` et `openspec-version.mjs` nettement au-dessus de 70, et le score global au-dessus de 80. Noter les deux scores dans le message de commit. **Si un fichier reste sous 70**, ouvrir `reports/mutation/index.html` et traiter les survivants restants un par un plutôt que d'accepter le chiffre.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add tests/
@@ -157,7 +157,7 @@ git commit -m "test: pin down what the task parser rejects, and cover the real v
 
 **Pourquoi.** L'extracteur est vendoré depuis l'amont et n'a jamais été exercé ici. On le **distribue** : s'il casse à une mise à jour amont, ou si son contrat diffère de ce que la skill décrit, on l'apprend chez un utilisateur. Ce test est la seule chose qui rattache notre documentation à son comportement réel.
 
-- [ ] **Step 1: Écrire la fixture**
+- [x] **Step 1: Écrire la fixture**
 
 Créer `tests/fixtures/gherkin/openspec/specs/demo/spec.md` :
 
@@ -191,7 +191,7 @@ Then no email is sent
 ```
 ````
 
-- [ ] **Step 2: Écrire le test qui échoue**
+- [x] **Step 2: Écrire le test qui échoue**
 
 Créer `tests/gherkin-extraction.test.mjs` :
 
@@ -247,7 +247,7 @@ test('prose outside the fences does not leak into the steps', () => {
 })
 ```
 
-- [ ] **Step 3: Lancer le test**
+- [x] **Step 3: Lancer le test**
 
 ```bash
 npm test
@@ -255,7 +255,7 @@ npm test
 
 Il peut **passer du premier coup** — l'extracteur existe déjà. Ce n'est pas un cycle RED/GREEN classique : on caractérise du code tiers, on ne le développe pas. Si un test échoue, c'est que le contrat réel diffère de ce que décrit `skills/acceptance-test-authoring/SKILL.md` : corriger alors la **documentation**, pas l'extracteur, et le dire dans le commit.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add tests/fixtures/gherkin tests/gherkin-extraction.test.mjs
@@ -276,7 +276,7 @@ git commit -m "test: characterise the vendored Gherkin extractor"
 
 **Format lu.** cucumber-js avec `--format json` produit un tableau de features, chacune avec `elements[]` (les scénarios), chacun avec `steps[]` portant `result.status` (`passed`, `failed`, `skipped`, `undefined`, `pending`). Un scénario compte pour réussi si **tous** ses steps sont `passed`.
 
-- [ ] **Step 1: Écrire le test qui échoue**
+- [x] **Step 1: Écrire le test qui échoue**
 
 Créer `tests/acceptance.test.mjs` :
 
@@ -329,7 +329,7 @@ test('a scenario with no steps does not count as passed', () => {
 })
 ```
 
-- [ ] **Step 2: Lancer le test pour vérifier qu'il échoue**
+- [x] **Step 2: Lancer le test pour vérifier qu'il échoue**
 
 ```bash
 npm test
@@ -337,7 +337,7 @@ npm test
 
 Attendu : `Cannot find module ... scripts/lib/acceptance.mjs`.
 
-- [ ] **Step 3: Écrire la lecture du rapport**
+- [x] **Step 3: Écrire la lecture du rapport**
 
 Créer `scripts/lib/acceptance.mjs` :
 
@@ -366,7 +366,7 @@ export function readCucumberScore(report) {
 }
 ```
 
-- [ ] **Step 4: Écrire le CLI**
+- [x] **Step 4: Écrire le CLI**
 
 Créer `scripts/acceptance-cli.mjs` :
 
@@ -429,7 +429,7 @@ function firstLine(error) {
 
 Le `try` imbriqué est le point délicat : cucumber sort en code non-zéro **quand des scénarios échouent**, ce qui est un score légitime et non une panne. On ne rend `UNKNOWN` que si aucun rapport n'a été écrit.
 
-- [ ] **Step 5: Lancer les tests**
+- [x] **Step 5: Lancer les tests**
 
 ```bash
 npm test
@@ -437,7 +437,7 @@ npm test
 
 Attendu : les 8 nouveaux tests passent.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add scripts/lib/acceptance.mjs scripts/acceptance-cli.mjs tests/acceptance.test.mjs
@@ -456,7 +456,7 @@ git commit -m "feat: score the acceptance dimension from a cucumber-js run"
 - Consumes: `acceptance-cli.mjs` (Task 3)
 - Produces: la dimension `acceptance` évaluable quand `spec_as_source: true`.
 
-- [ ] **Step 1: Écrire le test qui échoue**
+- [x] **Step 1: Écrire le test qui échoue**
 
 Ajouter à `tests/evaluator-contract.test.mjs` :
 
@@ -468,13 +468,13 @@ test('the evaluator runs the acceptance suite through the CLI', () => {
 })
 ```
 
-- [ ] **Step 2: Lancer le test pour vérifier qu'il échoue**
+- [x] **Step 2: Lancer le test pour vérifier qu'il échoue**
 
 ```bash
 npm test
 ```
 
-- [ ] **Step 3: Câbler l'évaluateur**
+- [x] **Step 3: Câbler l'évaluateur**
 
 Dans `agents/evaluator.md`, remplacer l'étape 7 :
 
@@ -493,7 +493,7 @@ Dans `agents/evaluator.md`, remplacer l'étape 7 :
    different fix tasks.
 ```
 
-- [ ] **Step 4: Compléter le pré-contrôle d'apply**
+- [x] **Step 4: Compléter le pré-contrôle d'apply**
 
 Dans `commands/idd/apply.md`, ajouter au pré-contrôle :
 
@@ -503,7 +503,7 @@ Dans `commands/idd/apply.md`, ajouter au pré-contrôle :
   to scaffold it.
 ```
 
-- [ ] **Step 5: Ajouter le scaffolding à `/idd:init`**
+- [x] **Step 5: Ajouter le scaffolding à `/idd:init`**
 
 Dans `commands/idd/init.md`, ajouter une section finale :
 
@@ -525,11 +525,11 @@ Do not hand-write `.feature` files: they are extracted from the specs, and
 anything written by hand there is overwritten on the next run.
 ```
 
-- [ ] **Step 6: Documenter**
+- [x] **Step 6: Documenter**
 
 Dans `README.md`, ajouter à la table des prérequis une ligne pour `@cucumber/cucumber`, requis dans le projet cible uniquement pour la dimension `acceptance`, désactivée par défaut.
 
-- [ ] **Step 7: Lancer les tests**
+- [x] **Step 7: Lancer les tests**
 
 ```bash
 npm test
@@ -537,7 +537,7 @@ npm test
 
 Attendu : toute la suite verte.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add agents/ commands/ README.md tests/
