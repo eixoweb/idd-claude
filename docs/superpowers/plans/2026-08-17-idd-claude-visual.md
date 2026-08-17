@@ -40,7 +40,7 @@
 - Consumes: rien
 - Produces: la commande `/idd:explore`, que `commands/idd/propose.md` référence déjà — ce renvoi est mort depuis le Plan 2 et cette tâche le répare.
 
-- [ ] **Step 1: Étendre le test de contrat**
+- [x] **Step 1: Étendre le test de contrat**
 
 Dans `tests/commands-contract.test.mjs`, ajouter `'explore.md'` à la liste du premier test, puis ajouter :
 
@@ -75,7 +75,7 @@ Ajouter `readdirSync` à l'import de `node:fs` en tête du fichier.
 
 Le second test est le vrai garde-fou : c'est exactement le défaut qui a échappé au Plan 2, et il ne pourra plus repasser.
 
-- [ ] **Step 2: Lancer les tests pour vérifier qu'ils échouent**
+- [x] **Step 2: Lancer les tests pour vérifier qu'ils échouent**
 
 ```bash
 node --test
@@ -83,7 +83,7 @@ node --test
 
 Attendu : ÉCHEC sur `missing command: explore.md`, et sur le renvoi mort depuis `propose.md`.
 
-- [ ] **Step 3: Écrire la commande**
+- [x] **Step 3: Écrire la commande**
 
 Créer `commands/idd/explore.md` :
 
@@ -132,7 +132,7 @@ It writes its mockups to `<project>/.superpowers/brainstorm/`. If that path is
 not in `.gitignore`, add it before accepting.
 ```
 
-- [ ] **Step 4: Lancer les tests**
+- [x] **Step 4: Lancer les tests**
 
 ```bash
 node --test
@@ -140,7 +140,7 @@ node --test
 
 Attendu : tous verts, dont les 2 nouveaux.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add commands/idd/explore.md tests/commands-contract.test.mjs
@@ -174,7 +174,7 @@ git commit -m "feat: /idd:explore, and a test that catches dangling command refe
 un nombre d'éléments. Rien d'autre — pas de prose du type « 12 colonnes », qui
 ne se vérifie pas.
 
-- [ ] **Step 1: Écrire le test qui échoue**
+- [x] **Step 1: Écrire le test qui échoue**
 
 Créer `tests/visual-parse.test.mjs` :
 
@@ -241,7 +241,7 @@ test('unknown directives are rejected rather than ignored', () => {
 })
 ```
 
-- [ ] **Step 2: Lancer le test pour vérifier qu'il échoue**
+- [x] **Step 2: Lancer le test pour vérifier qu'il échoue**
 
 ```bash
 node --test tests/visual-parse.test.mjs
@@ -249,7 +249,7 @@ node --test tests/visual-parse.test.mjs
 
 Attendu : `Cannot find module ... scripts/lib/visual.mjs`.
 
-- [ ] **Step 3: Écrire l'analyseur**
+- [x] **Step 3: Écrire l'analyseur**
 
 Créer `scripts/lib/visual.mjs` :
 
@@ -320,7 +320,7 @@ export function parseVisualSpec(lines) {
 Les séparateurs sont **deux espaces ou plus**, ce qui permet aux sélecteurs
 CSS de contenir des espaces (`.hero .layout-section > *`) sans guillemets.
 
-- [ ] **Step 4: Lancer les tests**
+- [x] **Step 4: Lancer les tests**
 
 ```bash
 node --test
@@ -328,7 +328,7 @@ node --test
 
 Attendu : les 8 nouveaux tests passent.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add scripts/lib/visual.mjs tests/visual-parse.test.mjs
@@ -348,7 +348,7 @@ git commit -m "feat: parse the VISUAL task assertion format"
 - Consumes: `parseVisualSpec` (Task 2)
 - Produces: `evaluateVisual(assertions, measured) => {score: number, failures: Failure[]}` et `buildProbeScript(spec, baseUrl) => string`. La Task 4 les branche dans l'évaluateur via `visual-cli.mjs`.
 
-- [ ] **Step 1: Écrire le test qui échoue**
+- [x] **Step 1: Écrire le test qui échoue**
 
 Créer `tests/visual-evaluate.test.mjs` :
 
@@ -423,7 +423,7 @@ test('the probe script targets the declared url and viewport', () => {
 })
 ```
 
-- [ ] **Step 2: Lancer le test pour vérifier qu'il échoue**
+- [x] **Step 2: Lancer le test pour vérifier qu'il échoue**
 
 ```bash
 node --test tests/visual-evaluate.test.mjs
@@ -431,7 +431,7 @@ node --test tests/visual-evaluate.test.mjs
 
 Attendu : `evaluateVisual is not a function`.
 
-- [ ] **Step 3: Écrire l'évaluation et la sonde**
+- [x] **Step 3: Écrire l'évaluation et la sonde**
 
 Ajouter à `scripts/lib/visual.mjs` :
 
@@ -502,7 +502,7 @@ console.log(JSON.stringify({ url: ${JSON.stringify(target)}, measured }));
 }
 ```
 
-- [ ] **Step 4: Écrire le CLI**
+- [x] **Step 4: Écrire le CLI**
 
 Créer `scripts/visual-cli.mjs` :
 
@@ -542,7 +542,7 @@ Le `catch` est le point important : une pile de dev injoignable rend `UNKNOWN`,
 que le calcul de verdict traduit en `BLOCK`. Rendre 0 ferait boucler l'agent
 sur du code qui n'est pas en cause.
 
-- [ ] **Step 5: Lancer les tests**
+- [x] **Step 5: Lancer les tests**
 
 ```bash
 node --test
@@ -550,7 +550,7 @@ node --test
 
 Attendu : les 9 nouveaux tests passent.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add scripts/lib/visual.mjs scripts/visual-cli.mjs tests/visual-evaluate.test.mjs
@@ -570,7 +570,7 @@ git commit -m "feat: evaluate measured values and probe the page through dev-bro
 - Consumes: `visual-cli.mjs` (Task 3)
 - Produces: la dimension `visual` réellement évaluable, et activée par défaut.
 
-- [ ] **Step 1: Écrire les tests qui échouent**
+- [x] **Step 1: Écrire les tests qui échouent**
 
 Dans `tests/skills-conformance.test.mjs`, ajouter `'visual-verification'` à la liste `EXPECTED`.
 
@@ -590,7 +590,7 @@ test('the evaluator probes the page through the CLI rather than by eye', () => {
 })
 ```
 
-- [ ] **Step 2: Lancer les tests pour vérifier qu'ils échouent**
+- [x] **Step 2: Lancer les tests pour vérifier qu'ils échouent**
 
 ```bash
 node --test
@@ -598,7 +598,7 @@ node --test
 
 Attendu : trois échecs — skill absente, `visual` encore à `false`, évaluateur ne citant pas le CLI.
 
-- [ ] **Step 3: Écrire la skill**
+- [x] **Step 3: Écrire la skill**
 
 Créer `skills/visual-verification/SKILL.md` :
 
@@ -665,7 +665,7 @@ a dev server started from an arbitrary directory, and impossible with a
 single-docroot stack such as DDEV — there, work in place and say why.
 ```
 
-- [ ] **Step 4: Câbler l'évaluateur**
+- [x] **Step 4: Câbler l'évaluateur**
 
 Dans `agents/evaluator.md`, remplacer l'étape 5 par :
 
@@ -681,7 +681,7 @@ Dans `agents/evaluator.md`, remplacer l'étape 5 par :
    broken environment is not a broken implementation.
 ```
 
-- [ ] **Step 5: Compléter le pré-contrôle d'apply**
+- [x] **Step 5: Compléter le pré-contrôle d'apply**
 
 Dans `commands/idd/apply.md`, préciser la première puce du pré-contrôle :
 
@@ -690,7 +690,7 @@ Dans `commands/idd/apply.md`, préciser la première puce du pré-contrôle :
   `project.dev_stack_command` is empty → stop, say which is missing.
 ```
 
-- [ ] **Step 6: Activer la dimension par défaut**
+- [x] **Step 6: Activer la dimension par défaut**
 
 Dans `scripts/lib/promote-schema.mjs`, `defaultConfig()` :
 
@@ -698,7 +698,7 @@ Dans `scripts/lib/promote-schema.mjs`, `defaultConfig()` :
   visual: true                 # dev-browser gate
 ```
 
-- [ ] **Step 7: Lancer les tests**
+- [x] **Step 7: Lancer les tests**
 
 ```bash
 node --test
@@ -706,7 +706,7 @@ node --test
 
 Attendu : toute la suite verte.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add skills/visual-verification/ agents/ commands/ scripts/ tests/
