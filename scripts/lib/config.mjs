@@ -2,7 +2,9 @@ import { parse } from 'yaml'
 
 export const ALL_DIMENSIONS = ['spec', 'runtime', 'code', 'visual', 'mutation', 'acceptance']
 
-const ALWAYS_ON = ['spec', 'runtime', 'code']
+// spec and code need no infrastructure — the evaluator scores them from the
+// diff and the review — so there is no legitimate reason to switch them off.
+const ALWAYS_ON = ['spec', 'code']
 
 const DEFAULT_FLOORS = {
   spec: 80,
@@ -29,6 +31,8 @@ export function readVerification(configSource) {
   }
 
   const enabled = [...ALWAYS_ON]
+  // Defaults to on: a project without tests must say so out loud.
+  if (v.runtime !== false) enabled.push('runtime')
   if (v.visual) enabled.push('visual')
   if (v.mutation) enabled.push('mutation')
   if (v.spec_as_source) enabled.push('acceptance')

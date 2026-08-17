@@ -13,8 +13,12 @@ be evaluated, and **refuse to start** if one cannot:
 - `visual: true` but `dev-browser` is not on PATH, or
   `project.dev_stack_command` is empty → stop, say which is missing.
 - `mutation: true` but no mutation tool is configured → stop, say so.
-- `project.test_commands` empty → warn that `runtime` will report UNKNOWN, and
-  that every group will therefore BLOCK. Ask whether to continue.
+- `runtime: true` (the default) but `project.test_commands` is empty → stop.
+  Either configure the commands, or set `runtime: false` to record that this
+  project has no test suite. Do not proceed with the dimension enabled and
+  nothing to run: every group would BLOCK.
+- `runtime: false` → say so at the start of the run. The change will be gated
+  on `spec`, `code` and whatever else is enabled, and on nothing executable.
 
 Never degrade silently. A dimension that is enabled but unevaluable stops the
 run; it does not quietly disappear from the verdict.
