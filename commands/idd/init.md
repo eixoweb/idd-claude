@@ -15,7 +15,7 @@ Set up this project for the idd-claude workflow.
 2. Read `openspec/config.yaml`. If `project.dev_stack_command` or
    `project.test_commands` are empty, ask the user for them one at a time and
    fill them in. These are required before `/idd:apply` can score the runtime
-   and visual dimensions. 
+   and visual dimensions.
 
 3. Confirm `openspec schemas` lists `idd-claude`, then report:
    - where the schema was installed,
