@@ -128,9 +128,30 @@ Cette surcharge est légitime — Superpowers pose lui-même que les instruction
 
 Le companion visuel de `brainstorming` devient disponible par ce biais, sans câblage supplémentaire. Il ne se déclenche que sur une question réellement visuelle — choisir entre deux dispositions de bloc, comparer deux maquettes — et jamais sur du conceptuel. Le dispositif devient alors cohérent d'un bout à l'autre : **on choisit avec le navigateur pendant explore, on vérifie avec le navigateur pendant apply**.
 
-### Question ouverte
+### Deux schémas, un par niveau
 
-Le schéma n'a **aucun champ d'optionalité** : que `design.md` soit facultatif est écrit en prose dans son instruction (« create only if any apply »), pas dans la structure. Or `adr` exige `design` et `tasks` exige `adr`. Il n'est donc pas établi qu'OpenSpec laisse réellement sauter ces deux artefacts sans bloquer la chaîne, ce dont dépend le niveau *bounded*. À vérifier empiriquement en tête du Plan 2 ; repli en cas de réponse négative : un second schéma allégé (`idd-claude-lite` : proposal → specs → tasks) sélectionné par `config.yaml`.
+**Question tranchée par un spike le 2026-08-17 : on ne peut pas sauter `design` et `adr`.** Le `requires` d'OpenSpec est un verrou dur sur l'existence du fichier. Avec `proposal` et `specs` écrits mais `design` absent, `openspec status` rend :
+
+```
+[x] proposal
+[x] specs
+[ ] design
+[-] adr    (blocked by: design)
+[-] tasks  (blocked by: adr)
+```
+
+La documentation le confirme : les champs d'un artefact sont `id`, `generates`, `template`, `instruction`, `requires` — **aucune notion d'optionalité**. Que `design.md` soit « facultatif » n'est écrit qu'en prose dans son instruction, sans effet sur le graphe.
+
+Le niveau *bounded* passe donc par un **second schéma**, et le mécanisme qui rend ça praticable est que **le schéma se choisit par changement, pas par projet** : `openspec new change <id> --schema <nom>` enregistre le choix dans `<change>/.openspec.yaml`, que toutes les commandes suivantes relisent — vérifié, un changement créé en `spec-driven` dans un projet configuré en `idd-claude` voit bien `status` rapporter `spec-driven`.
+
+| Schéma | Graphe | Niveau |
+|---|---|---|
+| `idd-claude` | proposal → {specs, design} ; design → adr ; {specs, adr} → tasks → apply → verification | architectural |
+| `idd-claude-lite` | proposal → specs → tasks → apply → verification | bounded |
+
+`/idd:propose` choisit le schéma au moment de créer le changement, d'après le niveau issu du classificateur ou de sa propre garde. Rien à modifier dans `config.yaml` entre deux changements ; `config.yaml` ne fixe que le défaut.
+
+Conséquence pour la promotion : `/idd:init` promeut **les deux** schémas.
 
 ## Phase apply
 
