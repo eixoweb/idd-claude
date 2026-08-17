@@ -14,6 +14,7 @@ stack: javascript              # javascript | php (v2)
 
 verification:
   spec_as_source: false        # executable Gherkin - off by default
+  runtime: true                # set to false only for a project with no test suite
   visual: true                 # dev-browser gate
   mutation: false              # mutation testing - off by default
   subagents: true              # one subagent per task

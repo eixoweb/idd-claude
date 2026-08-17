@@ -1,4 +1,4 @@
-import { test } from 'node:test'
+import { test } from 'vitest'
 import assert from 'node:assert/strict'
 import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -46,6 +46,7 @@ test('promoteSchema writes a default config when none exists', () => {
   const config = parse(readFileSync(configPath, 'utf8'))
   assert.equal(config.schema, SCHEMA_NAME)
   assert.equal(config.verification.spec_as_source, false)
+  assert.equal(config.verification.runtime, true)
   assert.equal(config.verification.visual, true)
   assert.equal(config.verification.mutation, false)
   assert.equal(config.verification.floors.runtime, 100)

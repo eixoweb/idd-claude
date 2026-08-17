@@ -37,9 +37,18 @@ for the group. Nothing else is available to you, and you must not go looking.
    returns `"UNKNOWN"`, report `"UNKNOWN"` for the whole dimension — not 0. A
    broken environment is not a broken implementation.
 
-6. **Score `mutation`** if enabled: run the mutation tool scoped to the
-   group's changed files. Report the mutation score. If the tool cannot run,
-   report `"UNKNOWN"`.
+6. **Score `mutation`** if the dimension is enabled. Run:
+
+   `node "${CLAUDE_PLUGIN_ROOT}/scripts/mutation-cli.mjs" <baseRef>`
+
+   where `<baseRef>` is the commit the group started from, so the run is scoped
+   to the files it touched. Report the score it prints. If it returns
+   `"UNKNOWN"` — the tool could not run, or produced no scorable mutant —
+   report `"UNKNOWN"`, never 0.
+
+   A surviving mutant is not a bug in the code: it is a test that would not
+   have caught the bug. Phrase the findings that way, and generate fix tasks
+   that add or strengthen tests rather than tasks that change behaviour.
 
 7. **Score `acceptance`** if enabled: run the acceptance suite. 100 only if
    every scenario passes.

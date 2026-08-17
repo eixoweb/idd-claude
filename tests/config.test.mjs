@@ -1,4 +1,4 @@
-import { test } from 'node:test'
+import { test } from 'vitest'
 import assert from 'node:assert/strict'
 import { ALL_DIMENSIONS, readVerification } from '../scripts/lib/config.mjs'
 
@@ -14,9 +14,23 @@ verification:
   evaluator_model: sonnet
 `
 
-test('spec, runtime and code are always enabled', () => {
-  const { enabled } = readVerification('verification: {}')
-  assert.deepEqual(enabled.sort(), ['code', 'runtime', 'spec'])
+test('spec and code are always enabled', () => {
+  const { enabled } = readVerification('verification:\n  runtime: false\n')
+  assert.ok(enabled.includes('spec'))
+  assert.ok(enabled.includes('code'))
+})
+
+test('runtime is enabled when the flag is absent', () => {
+  assert.ok(readVerification('verification: {}').enabled.includes('runtime'))
+})
+
+test('runtime: false removes the dimension', () => {
+  const { enabled } = readVerification('verification:\n  runtime: false\n')
+  assert.ok(!enabled.includes('runtime'), 'an opted-out project must not be scored on runtime')
+})
+
+test('runtime: true is accepted explicitly', () => {
+  assert.ok(readVerification('verification:\n  runtime: true\n').enabled.includes('runtime'))
 })
 
 test('visual, mutation and acceptance follow their flags', () => {

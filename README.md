@@ -13,6 +13,8 @@ which targets OpenCode.
 | ---------------- | -------------------------------------------------- |
 | OpenSpec ≥ 1.9.0 | `npm install -g @fission-ai/openspec@latest`       |
 | Superpowers      | `/plugin install superpowers@claude-plugins-official` |
+| dev-browser      | `npm install -g dev-browser && dev-browser install` (for the `visual` dimension) |
+| Stryker          | `npm i -D @stryker-mutator/core @stryker-mutator/vitest-runner` in the target project — only for the `mutation` dimension, which is off by default |
 
 ## Install
 

@@ -33,7 +33,7 @@
 
 `spec` et `code` restent inconditionnelles : elles ne demandent aucune infrastructure, l'évaluateur les note à partir du diff et de la revue. Il n'y a donc pas de raison légitime de les couper.
 
-- [ ] **Step 1: Écrire les tests qui échouent**
+- [x] **Step 1: Écrire les tests qui échouent**
 
 Dans `tests/config.test.mjs`, remplacer le premier test et en ajouter trois :
 
@@ -64,7 +64,7 @@ Dans `tests/promote-schema.test.mjs`, ajouter à l'assertion de config par défa
   assert.equal(config.verification.runtime, true)
 ```
 
-- [ ] **Step 2: Lancer les tests pour vérifier qu'ils échouent**
+- [x] **Step 2: Lancer les tests pour vérifier qu'ils échouent**
 
 ```bash
 node --test
@@ -72,7 +72,7 @@ node --test
 
 Attendu : ÉCHEC sur `runtime: false removes the dimension` (la dimension est câblée en dur) et sur la clé absente de la config par défaut.
 
-- [ ] **Step 3: Implémenter**
+- [x] **Step 3: Implémenter**
 
 Dans `scripts/lib/config.mjs` :
 
@@ -95,7 +95,7 @@ Dans `defaultConfig()` de `promote-schema.mjs`, sous `spec_as_source` :
   runtime: true                # set to false only for a project with no test suite
 ```
 
-- [ ] **Step 4: Rendre la désactivation visible**
+- [x] **Step 4: Rendre la désactivation visible**
 
 Dans `commands/idd/apply.md`, remplacer la troisième puce du pré-contrôle :
 
@@ -117,7 +117,7 @@ Dans les deux `templates/verification.md`, ajouter sous le tableau :
 Une dimension coupée doit apparaître dans le rapport : c'est ce qui distingue
 un PASS restreint d'un PASS complet, six mois plus tard.
 
-- [ ] **Step 5: Lancer les tests**
+- [x] **Step 5: Lancer les tests**
 
 ```bash
 node --test
@@ -125,7 +125,7 @@ node --test
 
 Attendu : toute la suite verte.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add scripts/ commands/ schema/ schema-lite/ tests/
@@ -146,13 +146,13 @@ git commit -m "feat: make the runtime dimension opt-out for projects with no tes
 
 **Pourquoi.** Stryker sait piloter jest, vitest, mocha, jasmine et cucumber, mais pas le lanceur intégré de Node. Sans migration, appliquer la dimension `mutation` à `idd-claude` lui-même imposerait le `command-runner` générique — plus lent, et incapable de rattacher un mutant au test qui le tue. Le coût est réel et à connaître : on passe d'**une** dépendance de dev à un arbre d'une centaine de paquets.
 
-- [ ] **Step 1: Installer vitest**
+- [x] **Step 1: Installer vitest**
 
 ```bash
 npm install -D vitest
 ```
 
-- [ ] **Step 2: Basculer les imports**
+- [x] **Step 2: Basculer les imports**
 
 Un seul changement par fichier : la provenance de `test`. Les assertions restent en `node:assert/strict`, que vitest exécute sans adaptation — c'est ce qui rend la migration mécanique.
 
@@ -163,7 +163,7 @@ grep -c "from 'vitest'" tests/*.test.mjs
 
 Attendu : `1` pour chacun des neuf fichiers.
 
-- [ ] **Step 3: Configurer**
+- [x] **Step 3: Configurer**
 
 Créer `vitest.config.js` :
 
@@ -187,7 +187,7 @@ Dans `package.json` :
   }
 ```
 
-- [ ] **Step 4: Lancer la suite complète**
+- [x] **Step 4: Lancer la suite complète**
 
 ```bash
 npm test
@@ -197,7 +197,7 @@ Attendu : **88 tests passent**, le même compte qu'avant la migration. Un écart
 
 Point de vigilance : vitest exécute les fichiers en parallèle, là où `node --test` les séquençait. Nos tests créent leurs répertoires par `mkdtempSync` et ne partagent aucun état, donc le parallélisme est sûr — mais si un échec intermittent apparaît, c'est la première piste, et `--no-file-parallelism` l'isole.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add package.json package-lock.json vitest.config.js tests/
@@ -217,7 +217,7 @@ git commit -m "build: migrate the test harness from node:test to vitest"
 - Consumes: `computeVerdict` (Plan 2)
 - Produces: `readMutationScore(report: object) => number` et la commande `node scripts/mutation-cli.mjs <sinceRef>` qui imprime `{score}` ou `{score: "UNKNOWN", error}`.
 
-- [ ] **Step 1: Écrire le test qui échoue**
+- [x] **Step 1: Écrire le test qui échoue**
 
 Créer `tests/mutation.test.mjs` :
 
@@ -273,7 +273,7 @@ test('mutants are counted across every file', () => {
 })
 ```
 
-- [ ] **Step 2: Lancer le test pour vérifier qu'il échoue**
+- [x] **Step 2: Lancer le test pour vérifier qu'il échoue**
 
 ```bash
 npm test
@@ -281,7 +281,7 @@ npm test
 
 Attendu : `Cannot find module ... scripts/lib/mutation.mjs`.
 
-- [ ] **Step 3: Écrire la lecture du rapport**
+- [x] **Step 3: Écrire la lecture du rapport**
 
 Créer `scripts/lib/mutation.mjs` :
 
@@ -315,7 +315,7 @@ export function readMutationScore(report) {
 }
 ```
 
-- [ ] **Step 4: Écrire la configuration et le CLI**
+- [x] **Step 4: Écrire la configuration et le CLI**
 
 Créer `stryker.config.json` :
 
@@ -369,7 +369,7 @@ function firstLine(error) {
 }
 ```
 
-- [ ] **Step 5: Câbler l'évaluateur**
+- [x] **Step 5: Câbler l'évaluateur**
 
 Dans `agents/evaluator.md`, remplacer l'étape 6 :
 
@@ -408,7 +408,7 @@ Dans `README.md`, ajouter sous « Prerequisites » une ligne indiquant que la
 dimension `mutation` requiert Stryker installé dans le projet cible, et qu'elle
 est désactivée par défaut.
 
-- [ ] **Step 6: Lancer les tests**
+- [x] **Step 6: Lancer les tests**
 
 ```bash
 npm test
@@ -416,7 +416,7 @@ npm test
 
 Attendu : les 8 nouveaux tests passent, toute la suite avec.
 
-- [ ] **Step 7: Vérifier Stryker sur ce repo**
+- [x] **Step 7: Vérifier Stryker sur ce repo**
 
 ```bash
 npm install -D @stryker-mutator/core @stryker-mutator/vitest-runner
@@ -425,7 +425,7 @@ npx stryker run
 
 Attendu : un score de mutation sur `scripts/lib/`. **Ce n'est pas un test automatisé** — c'est une vérification manuelle, unique, que la chaîne fonctionne de bout en bout sur un vrai projet. Noter le score obtenu dans le message de commit ; s'il est bas, ce sont nos propres tests qui sont faibles, et c'est une information utile.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add scripts/ stryker.config.json agents/ commands/ README.md tests/ package.json package-lock.json
