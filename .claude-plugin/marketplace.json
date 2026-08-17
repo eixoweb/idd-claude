@@ -1,0 +1,8 @@
+{
+  "name": "idd-claude",
+  "owner": { "name": "Matthieu Guirlinger" },
+  "metadata": {
+    "description": "OpenSpec workflow for Claude Code with enforced Superpowers TDD and a scored evaluator gate."
+  },
+  "plugins": [{ "name": "idd-claude", "source": "./" }]
+}

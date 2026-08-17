@@ -102,7 +102,7 @@ test('marketplace.json lists the plugin at the repo root', () => {
 - [ ] **Step 3: Lancer le test pour vérifier qu'il échoue**
 
 ```bash
-node --test tests/
+node --test
 ```
 
 Attendu : ÉCHEC avec `ENOENT ... .claude-plugin/plugin.json` — les manifestes n'existent pas encore.
@@ -118,7 +118,7 @@ Attendu : ÉCHEC avec `ENOENT ... .claude-plugin/plugin.json` — les manifestes
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test tests/"
+    "test": "node --test"
   },
   "devDependencies": {
     "yaml": "^2.4.0"
@@ -134,7 +134,7 @@ Attendu : ÉCHEC avec `ENOENT ... .claude-plugin/plugin.json` — les manifestes
   "version": "0.1.0",
   "description": "OpenSpec workflow for Claude Code with enforced Superpowers TDD, a scored evaluator gate, and measured visual verification.",
   "author": { "name": "Matthieu Guirlinger" },
-  "repository": "https://github.com/mguirlinger/idd-claude",
+  "repository": "https://github.com/eixoweb/idd-claude",
   "license": "MIT",
   "keywords": ["openspec", "superpowers", "tdd", "spec-driven", "code-review"]
 }
@@ -188,7 +188,7 @@ which targets OpenCode.
 
 ```
 
-/plugin marketplace add /idd-claude
+/plugin marketplace add eixoweb/idd-claude
 /plugin install idd-claude@idd-claude
 
 ```
@@ -215,7 +215,7 @@ See `docs/superpowers/specs/` for the design documents and
 
 ```bash
 npm install
-node --test tests/
+node --test
 ```
 
 Attendu : les 2 tests passent.
@@ -300,7 +300,7 @@ test('every artifact points at a template file that exists', () => {
 - [ ] **Step 2: Lancer le test pour vérifier qu'il échoue**
 
 ```bash
-node --test tests/schema-graph.test.mjs
+node --test
 ```
 
 Attendu : ÉCHEC avec `ENOENT ... schema/schema.yaml`.
@@ -370,7 +370,7 @@ Les gabarits `templates/proposal.md`, `spec.md`, `design.md`, `adr.md`, `tasks.m
 - [ ] **Step 4: Lancer les tests**
 
 ```bash
-node --test tests/
+node --test
 ```
 
 Attendu : les 7 tests passent.
@@ -451,7 +451,7 @@ test('detectOpenspec reports a missing binary instead of throwing', () => {
 - [ ] **Step 2: Lancer le test pour vérifier qu'il échoue**
 
 ```bash
-node --test tests/openspec-version.test.mjs
+node --test
 ```
 
 Attendu : ÉCHEC — `Cannot find module ... scripts/lib/openspec-version.mjs`.
@@ -499,7 +499,7 @@ export function detectOpenspec(run = defaultRun) {
 - [ ] **Step 4: Lancer les tests**
 
 ```bash
-node --test tests/
+node --test
 ```
 
 Attendu : les 6 nouveaux tests passent, les précédents aussi.
@@ -608,7 +608,7 @@ test('defaultConfig is parseable YAML with spec_as_source off', () => {
 - [ ] **Step 2: Lancer le test pour vérifier qu'il échoue**
 
 ```bash
-node --test tests/promote-schema.test.mjs
+node --test
 ```
 
 Attendu : ÉCHEC — `Cannot find module ... scripts/lib/promote-schema.mjs`.
@@ -679,7 +679,7 @@ export function hasDrifted(projectRoot, pluginVersion) {
 - [ ] **Step 4: Lancer les tests**
 
 ```bash
-node --test tests/
+node --test
 ```
 
 Attendu : les 6 nouveaux tests passent.
@@ -780,7 +780,7 @@ test('promote.mjs refuses to run when OpenSpec is too old', () => {
 - [ ] **Step 2: Lancer le test pour vérifier qu'il échoue**
 
 ```bash
-node --test tests/init-end-to-end.test.mjs
+node --test
 ```
 
 Attendu : ÉCHEC — `Cannot find module ... scripts/promote.mjs`.
@@ -868,7 +868,7 @@ they are a copy, and the next promotion overwrites them.
 - [ ] **Step 5: Lancer les tests**
 
 ```bash
-node --test tests/
+node --test
 ```
 
 Attendu : tous les tests passent, dont les 2 nouveaux. Le second exige qu'`openspec` soit dans le PATH en version ≥ 1.9.0 — c'est ce qu'a installé la Task 1.
@@ -979,7 +979,7 @@ test('the adversarial agents are ported with Claude Code frontmatter', () => {
 - [ ] **Step 2: Lancer le test pour vérifier qu'il échoue**
 
 ```bash
-node --test tests/skills-conformance.test.mjs
+node --test
 ```
 
 Attendu : ÉCHEC — `Cannot find module ... scripts/lib/frontmatter.mjs`.
@@ -1060,7 +1060,7 @@ model: opus
 - [ ] **Step 5: Lancer les tests**
 
 ```bash
-node --test tests/
+node --test
 ```
 
 Attendu : les 4 nouveaux tests passent. Si le test de conformité signale un `name` de frontmatter qui ne correspond pas à son dossier, renommer le dossier plutôt que le frontmatter — c'est le frontmatter qui est référencé par les autres skills.
