@@ -2,6 +2,9 @@ import { cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node
 import { join } from 'node:path'
 
 export const SCHEMA_NAME = 'idd-claude'
+export const SCHEMA_NAMES = ['idd-claude', 'idd-claude-lite']
+
+const SOURCE_DIRS = { 'idd-claude': 'schema', 'idd-claude-lite': 'schema-lite' }
 
 const VERSION_STAMP = '.promoted-version'
 
@@ -11,7 +14,7 @@ stack: javascript              # javascript | php (v2)
 
 verification:
   spec_as_source: false        # executable Gherkin - off by default
-  visual: true                 # dev-browser gate
+  visual: false                # dev-browser gate - enabled in plan 3
   mutation: false              # mutation testing - off by default
   subagents: true              # one subagent per task
   floors:                      # a dimension below its floor -> RETRY
@@ -33,20 +36,24 @@ rules: {}
 }
 
 export function promoteSchema({ pluginRoot, projectRoot, pluginVersion }) {
-  const schemaPath = join(projectRoot, 'openspec', 'schemas', SCHEMA_NAME)
-  mkdirSync(schemaPath, { recursive: true })
-  cpSync(join(pluginRoot, 'schema'), schemaPath, { recursive: true })
-  writeFileSync(join(schemaPath, VERSION_STAMP), `${pluginVersion}\n`, 'utf8')
+  const schemaPaths = {}
+  for (const name of SCHEMA_NAMES) {
+    const target = join(projectRoot, 'openspec', 'schemas', name)
+    mkdirSync(target, { recursive: true })
+    cpSync(join(pluginRoot, SOURCE_DIRS[name]), target, { recursive: true })
+    writeFileSync(join(target, VERSION_STAMP), `${pluginVersion}\n`, 'utf8')
+    schemaPaths[name] = target
+  }
 
   const configPath = join(projectRoot, 'openspec', 'config.yaml')
   const configCreated = !existsSync(configPath)
   if (configCreated) writeFileSync(configPath, defaultConfig(), 'utf8')
 
-  return { schemaPath, configPath, configCreated }
+  return { schemaPaths, configPath, configCreated }
 }
 
-export function promotedVersion(projectRoot) {
-  const stamp = join(projectRoot, 'openspec', 'schemas', SCHEMA_NAME, VERSION_STAMP)
+export function promotedVersion(projectRoot, name = SCHEMA_NAME) {
+  const stamp = join(projectRoot, 'openspec', 'schemas', name, VERSION_STAMP)
   return existsSync(stamp) ? readFileSync(stamp, 'utf8').trim() : null
 }
 

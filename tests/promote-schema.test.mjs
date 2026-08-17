@@ -16,12 +16,23 @@ import {
 const pluginRoot = fileURLToPath(new URL('../', import.meta.url))
 const newProject = () => mkdtempSync(join(tmpdir(), 'idd-'))
 
-test('promoteSchema copies the schema into the project', () => {
+test('promoteSchema copies both schemas into the project', () => {
   const project = newProject()
-  const { schemaPath } = promoteSchema({ pluginRoot, projectRoot: project, pluginVersion: '0.1.0' })
-  assert.equal(schemaPath, join(project, 'openspec', 'schemas', SCHEMA_NAME))
-  assert.ok(existsSync(join(schemaPath, 'schema.yaml')))
-  assert.ok(existsSync(join(schemaPath, 'templates', 'proposal.md')))
+  const { schemaPaths } = promoteSchema({ pluginRoot, projectRoot: project, pluginVersion: '0.1.0' })
+
+  assert.deepEqual(Object.keys(schemaPaths).sort(), ['idd-claude', 'idd-claude-lite'])
+  for (const [name, path] of Object.entries(schemaPaths)) {
+    assert.equal(path, join(project, 'openspec', 'schemas', name))
+    assert.ok(existsSync(join(path, 'schema.yaml')), `${name}: no schema.yaml`)
+    assert.ok(existsSync(join(path, 'templates', 'proposal.md')), `${name}: no proposal template`)
+  }
+})
+
+test('both promoted schemas are stamped with the plugin version', () => {
+  const project = newProject()
+  promoteSchema({ pluginRoot, projectRoot: project, pluginVersion: '0.1.0' })
+  assert.equal(promotedVersion(project), '0.1.0')
+  assert.equal(promotedVersion(project, 'idd-claude-lite'), '0.1.0')
 })
 
 test('promoteSchema writes a default config when none exists', () => {
@@ -35,7 +46,7 @@ test('promoteSchema writes a default config when none exists', () => {
   const config = parse(readFileSync(configPath, 'utf8'))
   assert.equal(config.schema, SCHEMA_NAME)
   assert.equal(config.verification.spec_as_source, false)
-  assert.equal(config.verification.visual, true)
+  assert.equal(config.verification.visual, false)
   assert.equal(config.verification.mutation, false)
   assert.equal(config.verification.floors.runtime, 100)
   assert.equal(config.verification.floors.visual, 100)

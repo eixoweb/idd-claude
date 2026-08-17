@@ -29,13 +29,15 @@ if (!openspec.satisfies) {
 }
 
 const drifted = hasDrifted(projectRoot, pluginVersion)
-const { schemaPath, configPath, configCreated } = promoteSchema({
+const { schemaPaths, configPath, configCreated } = promoteSchema({
   pluginRoot,
   projectRoot,
   pluginVersion,
 })
 
-console.log(`Schema promoted to ${schemaPath} (plugin ${pluginVersion})`)
+for (const [name, path] of Object.entries(schemaPaths)) {
+  console.log(`Schema ${name} promoted to ${path} (plugin ${pluginVersion})`)
+}
 console.log(
   configCreated ? `Config written to ${configPath}` : `Config left untouched at ${configPath}`,
 )

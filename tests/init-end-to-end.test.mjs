@@ -22,6 +22,7 @@ test('promote.mjs installs a schema that OpenSpec accepts', () => {
   execFileSync('node', [promote, project], { encoding: 'utf8' })
 
   assert.ok(existsSync(join(project, 'openspec', 'schemas', 'idd-claude', 'schema.yaml')))
+  assert.ok(existsSync(join(project, 'openspec', 'schemas', 'idd-claude-lite', 'schema.yaml')))
   assert.ok(existsSync(join(project, 'openspec', 'config.yaml')))
 
   const schemas = execFileSync('openspec', ['schemas', '--json'], {
@@ -29,6 +30,7 @@ test('promote.mjs installs a schema that OpenSpec accepts', () => {
     encoding: 'utf8',
   })
   assert.match(schemas, /idd-claude/)
+  assert.match(schemas, /idd-claude-lite/)
 })
 
 test('promote.mjs refuses to run when OpenSpec is too old', () => {
