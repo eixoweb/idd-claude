@@ -43,3 +43,13 @@ test('detectOpenspec reports a missing binary instead of throwing', () => {
   })
   assert.deepEqual(result, { installed: false, version: null, satisfies: false })
 })
+
+test('detectOpenspec finds the real CLI when no runner is injected', () => {
+  // The other tests inject a fake runner, so defaultRun is never executed and
+  // its body goes unmutated-and-uncovered. This exercises it for real: the
+  // project's own prerequisite is that openspec >= 1.9 is on PATH.
+  const result = detectOpenspec()
+  assert.equal(result.installed, true)
+  assert.match(result.version, /^\d+\.\d+\.\d+$/)
+  assert.equal(result.satisfies, true)
+})
