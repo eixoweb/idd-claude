@@ -4,9 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test"
+    "test": "vitest run"
   },
   "devDependencies": {
+    "vitest": "^4.1.10",
     "yaml": "^2.4.0"
   }
 }
