@@ -10,7 +10,8 @@ Implement the change named in the argument, under hard gates.
 Read `openspec/config.yaml`. Then check every enabled dimension can actually
 be evaluated, and **refuse to start** if one cannot:
 
-- `visual: true` but dev-browser is not installed → stop, say so.
+- `visual: true` but `dev-browser` is not on PATH, or
+  `project.dev_stack_command` is empty → stop, say which is missing.
 - `mutation: true` but no mutation tool is configured → stop, say so.
 - `project.test_commands` empty → warn that `runtime` will report UNKNOWN, and
   that every group will therefore BLOCK. Ask whether to continue.

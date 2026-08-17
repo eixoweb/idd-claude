@@ -20,6 +20,7 @@ const EXPECTED = [
   'grill-me',
   'openspec-git-discipline',
   'spec-as-source',
+  'visual-verification',
 ]
 
 test('every ported skill is present', () => {

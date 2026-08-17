@@ -14,7 +14,7 @@ stack: javascript              # javascript | php (v2)
 
 verification:
   spec_as_source: false        # executable Gherkin - off by default
-  visual: false                # dev-browser gate - enabled in plan 3
+  visual: true                 # dev-browser gate
   mutation: false              # mutation testing - off by default
   subagents: true              # one subagent per task
   floors:                      # a dimension below its floor -> RETRY
