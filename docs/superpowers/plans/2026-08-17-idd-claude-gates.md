@@ -50,7 +50,7 @@
 - Consumes: `promoteSchema` (Plan 1)
 - Produces: `SCHEMA_NAMES` (tableau `['idd-claude', 'idd-claude-lite']`) exporté par `promote-schema.mjs` ; `promoteSchema` retourne désormais `{schemaPaths: {[name]: path}, configPath, configCreated}`.
 
-- [ ] **Step 1: Écrire le test du graphe allégé**
+- [x] **Step 1: Écrire le test du graphe allégé**
 
 Créer `tests/schema-lite-graph.test.mjs` :
 
@@ -91,7 +91,7 @@ test('every lite artifact points at a template that exists', () => {
 })
 ```
 
-- [ ] **Step 2: Lancer le test pour vérifier qu'il échoue**
+- [x] **Step 2: Lancer le test pour vérifier qu'il échoue**
 
 ```bash
 node --test
@@ -99,7 +99,7 @@ node --test
 
 Attendu : ÉCHEC avec `ENOENT ... schema-lite/schema.yaml`.
 
-- [ ] **Step 3: Écrire le schéma allégé**
+- [x] **Step 3: Écrire le schéma allégé**
 
 ```bash
 mkdir -p schema-lite/templates
@@ -126,7 +126,7 @@ Ce garde-fou compte : c'est le seul point où l'on peut rattraper un changement 
 
 `schema-lite/README.md` : nom, la commande de création (`openspec new change <id> --schema idd-claude-lite`), le graphe linéaire, et la phrase disant quand basculer sur le schéma complet.
 
-- [ ] **Step 4: Écrire le test de promotion des deux schémas**
+- [x] **Step 4: Écrire le test de promotion des deux schémas**
 
 Dans `tests/promote-schema.test.mjs`, remplacer le premier test par :
 
@@ -151,7 +151,7 @@ test('both promoted schemas are stamped with the plugin version', () => {
 })
 ```
 
-- [ ] **Step 5: Adapter la promotion**
+- [x] **Step 5: Adapter la promotion**
 
 Dans `scripts/lib/promote-schema.mjs` :
 
@@ -198,7 +198,7 @@ for (const [name, path] of Object.entries(schemaPaths)) {
 }
 ```
 
-- [ ] **Step 6: Basculer `visual` à `false` par défaut**
+- [x] **Step 6: Basculer `visual` à `false` par défaut**
 
 Le runner d'assertions dev-browser n'arrive qu'au Plan 3. Or `/idd:apply` (Task 6)
 refusera de démarrer si une dimension activée est inévaluable — c'est la règle
@@ -220,7 +220,7 @@ Et dans `tests/promote-schema.test.mjs`, corriger l'assertion correspondante :
 Le Plan 3 rebasculera cette valeur à `true` dans le même commit qui livre le
 runner — jamais avant.
 
-- [ ] **Step 7: Lancer les tests**
+- [x] **Step 7: Lancer les tests**
 
 ```bash
 node --test
@@ -228,7 +228,7 @@ node --test
 
 Attendu : tous verts. Le test de bout en bout du Plan 1 (`openspec schemas --json` contient `idd-claude`) continue de passer ; ajouter dans ce même test l'assertion que la sortie contient aussi `idd-claude-lite`.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add schema-lite/ scripts/ tests/
@@ -247,7 +247,7 @@ git commit -m "feat: lite schema for bounded changes, promote both schemas"
 - Consumes: rien
 - Produces: `ALL_DIMENSIONS` (`['spec','runtime','code','visual','mutation','acceptance']`), `readVerification(configSource: string) => {enabled: string[], floors: object, maxIterations: number, evaluatorModel: string, subagents: boolean}`. Les Tasks 4 et 6 consomment `enabled` et `floors`.
 
-- [ ] **Step 1: Écrire le test qui échoue**
+- [x] **Step 1: Écrire le test qui échoue**
 
 Créer `tests/config.test.mjs` :
 
@@ -324,7 +324,7 @@ test('operational settings come through with defaults', () => {
 })
 ```
 
-- [ ] **Step 2: Lancer le test pour vérifier qu'il échoue**
+- [x] **Step 2: Lancer le test pour vérifier qu'il échoue**
 
 ```bash
 node --test tests/config.test.mjs
@@ -332,7 +332,7 @@ node --test tests/config.test.mjs
 
 Attendu : `Cannot find module ... scripts/lib/config.mjs`.
 
-- [ ] **Step 3: Écrire l'implémentation minimale**
+- [x] **Step 3: Écrire l'implémentation minimale**
 
 Créer `scripts/lib/config.mjs` :
 
@@ -382,7 +382,7 @@ export function readVerification(configSource) {
 }
 ```
 
-- [ ] **Step 4: Lancer les tests**
+- [x] **Step 4: Lancer les tests**
 
 ```bash
 node --test
@@ -390,7 +390,7 @@ node --test
 
 Attendu : les 8 nouveaux tests passent.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add scripts/lib/config.mjs tests/config.test.mjs
@@ -409,7 +409,7 @@ git commit -m "feat: read and validate the verification block of config.yaml"
 - Consumes: rien
 - Produces: `TASK_TYPES` (`['RED','GREEN','REFACTOR','VISUAL','FIX','ACCEPT']`), `parseTasks(source: string) => Group[]` où `Group = {number: number, title: string, tasks: Task[]}` et `Task = {ordinal: string, type: string|null, description: string, done: boolean, lines: string[]}`. La Task 6 s'en sert pour piloter la boucle d'apply.
 
-- [ ] **Step 1: Écrire le test qui échoue**
+- [x] **Step 1: Écrire le test qui échoue**
 
 Créer `tests/tasks.test.mjs` :
 
@@ -494,7 +494,7 @@ test('an em dash is optional after the keyword', () => {
 })
 ```
 
-- [ ] **Step 2: Lancer le test pour vérifier qu'il échoue**
+- [x] **Step 2: Lancer le test pour vérifier qu'il échoue**
 
 ```bash
 node --test tests/tasks.test.mjs
@@ -502,7 +502,7 @@ node --test tests/tasks.test.mjs
 
 Attendu : `Cannot find module ... scripts/lib/tasks.mjs`.
 
-- [ ] **Step 3: Écrire l'implémentation minimale**
+- [x] **Step 3: Écrire l'implémentation minimale**
 
 Créer `scripts/lib/tasks.mjs` :
 
@@ -547,7 +547,7 @@ export function parseTasks(source) {
 }
 ```
 
-- [ ] **Step 4: Lancer les tests**
+- [x] **Step 4: Lancer les tests**
 
 ```bash
 node --test
@@ -555,7 +555,7 @@ node --test
 
 Attendu : les 8 nouveaux tests passent.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add scripts/lib/tasks.mjs tests/tasks.test.mjs
@@ -574,7 +574,7 @@ git commit -m "feat: parse tasks.md into groups and typed tasks"
 - Consumes: `enabled` et `floors` (Task 2)
 - Produces: `UNKNOWN` (symbole chaîne `'UNKNOWN'`), `computeVerdict({scores, floors, enabled}) => {status: 'PASS'|'RETRY'|'BLOCK', failed: string[], unevaluated: string[]}`. La Task 5 le fait exécuter par l'évaluateur.
 
-- [ ] **Step 1: Écrire le test qui échoue**
+- [x] **Step 1: Écrire le test qui échoue**
 
 Créer `tests/verdict.test.mjs` :
 
@@ -655,7 +655,7 @@ test('a missing score for an enabled dimension is unevaluated, not zero', () => 
 })
 ```
 
-- [ ] **Step 2: Lancer le test pour vérifier qu'il échoue**
+- [x] **Step 2: Lancer le test pour vérifier qu'il échoue**
 
 ```bash
 node --test tests/verdict.test.mjs
@@ -663,7 +663,7 @@ node --test tests/verdict.test.mjs
 
 Attendu : `Cannot find module ... scripts/lib/verdict.mjs`.
 
-- [ ] **Step 3: Écrire l'implémentation minimale**
+- [x] **Step 3: Écrire l'implémentation minimale**
 
 Créer `scripts/lib/verdict.mjs` :
 
@@ -691,7 +691,7 @@ export function computeVerdict({ scores, floors, enabled }) {
 }
 ```
 
-- [ ] **Step 4: Lancer les tests**
+- [x] **Step 4: Lancer les tests**
 
 ```bash
 node --test
@@ -699,7 +699,7 @@ node --test
 
 Attendu : les 7 nouveaux tests passent.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add scripts/lib/verdict.mjs tests/verdict.test.mjs
@@ -719,7 +719,7 @@ git commit -m "feat: verdict by per-dimension floors, blocking on unevaluable di
 - Consumes: `computeVerdict` (Task 4), `readVerification` (Task 2)
 - Produces: la commande `node scripts/verdict-cli.mjs <configPath> <scoresJson>`, qui imprime le verdict en JSON. L'évaluateur l'appelle plutôt que de calculer le verdict de tête — un modèle ne doit pas arbitrer sa propre note.
 
-- [ ] **Step 1: Écrire le test qui échoue**
+- [x] **Step 1: Écrire le test qui échoue**
 
 Créer `tests/evaluator-contract.test.mjs` :
 
@@ -780,7 +780,7 @@ test('verdict-cli BLOCKS when an enabled dimension was not scored', () => {
 })
 ```
 
-- [ ] **Step 2: Lancer le test pour vérifier qu'il échoue**
+- [x] **Step 2: Lancer le test pour vérifier qu'il échoue**
 
 ```bash
 node --test tests/evaluator-contract.test.mjs
@@ -788,7 +788,7 @@ node --test tests/evaluator-contract.test.mjs
 
 Attendu : ÉCHEC — ni `agents/evaluator.md` ni `scripts/verdict-cli.mjs` n'existent.
 
-- [ ] **Step 3: Écrire le CLI de verdict**
+- [x] **Step 3: Écrire le CLI de verdict**
 
 Créer `scripts/verdict-cli.mjs` :
 
@@ -810,7 +810,7 @@ const scores = JSON.parse(scoresJson)
 console.log(JSON.stringify(computeVerdict({ scores, floors, enabled })))
 ```
 
-- [ ] **Step 4: Écrire l'agent**
+- [x] **Step 4: Écrire l'agent**
 
 Créer `agents/evaluator.md` :
 
@@ -882,7 +882,7 @@ Never soften a verdict. A PASS obtained by skipping a dimension is worse than
 a failure, because it lies.
 ```
 
-- [ ] **Step 5: Lancer les tests**
+- [x] **Step 5: Lancer les tests**
 
 ```bash
 node --test
@@ -890,7 +890,7 @@ node --test
 
 Attendu : les 4 nouveaux tests passent.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add agents/evaluator.md scripts/verdict-cli.mjs tests/evaluator-contract.test.mjs
@@ -910,7 +910,7 @@ git commit -m "feat: evaluator subagent with an out-of-band verdict computation"
 - Consumes: `parseTasks` (Task 3), `readVerification` (Task 2), l'agent `evaluator` (Task 5)
 - Produces: la commande `/idd:apply`, et le bloc `apply` des deux schémas remplacé par les gates.
 
-- [ ] **Step 1: Écrire le test qui échoue**
+- [x] **Step 1: Écrire le test qui échoue**
 
 Créer `tests/apply-contract.test.mjs` :
 
@@ -959,7 +959,7 @@ test('both schemas replaced the upstream apply instruction', () => {
 })
 ```
 
-- [ ] **Step 2: Lancer le test pour vérifier qu'il échoue**
+- [x] **Step 2: Lancer le test pour vérifier qu'il échoue**
 
 ```bash
 node --test tests/apply-contract.test.mjs
@@ -967,7 +967,7 @@ node --test tests/apply-contract.test.mjs
 
 Attendu : ÉCHEC — `commands/idd/apply.md` n'existe pas.
 
-- [ ] **Step 3: Écrire la commande**
+- [x] **Step 3: Écrire la commande**
 
 Créer `commands/idd/apply.md` :
 
@@ -1046,7 +1046,7 @@ Invoke `superpowers:verification-before-completion`, then hand off to
 `/idd:verify`.
 ```
 
-- [ ] **Step 4: Remplacer le bloc `apply` des deux schémas**
+- [x] **Step 4: Remplacer le bloc `apply` des deux schémas**
 
 Dans `schema/schema.yaml` **et** `schema-lite/schema.yaml`, remplacer l'instruction du bloc `apply` par :
 
@@ -1063,7 +1063,7 @@ apply:
     against its own specs.
 ```
 
-- [ ] **Step 5: Écrire le petit CLI du parseur**
+- [x] **Step 5: Écrire le petit CLI du parseur**
 
 Créer `scripts/lib/tasks-cli.mjs` :
 
@@ -1080,7 +1080,7 @@ if (!path) {
 console.log(JSON.stringify(parseTasks(readFileSync(path, 'utf8')), null, 2))
 ```
 
-- [ ] **Step 6: Lancer les tests**
+- [x] **Step 6: Lancer les tests**
 
 ```bash
 node --test
@@ -1088,7 +1088,7 @@ node --test
 
 Attendu : les 6 nouveaux tests passent, et le test du graphe du Plan 1 continue de passer (seule l'instruction d'`apply` a changé, pas ses `requires`).
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add commands/idd/apply.md scripts/lib/tasks-cli.mjs schema/ schema-lite/ tests/
@@ -1107,7 +1107,7 @@ git commit -m "feat: /idd:apply with hard TDD gates and the evaluator loop"
 - Consumes: les deux schémas (Task 1), l'artefact `verification` (Plan 1)
 - Produces: le cycle complet en commandes.
 
-- [ ] **Step 1: Écrire le test qui échoue**
+- [x] **Step 1: Écrire le test qui échoue**
 
 Créer `tests/commands-contract.test.mjs` :
 
@@ -1156,7 +1156,7 @@ test('archive gates on a green verification', () => {
 })
 ```
 
-- [ ] **Step 2: Lancer le test pour vérifier qu'il échoue**
+- [x] **Step 2: Lancer le test pour vérifier qu'il échoue**
 
 ```bash
 node --test tests/commands-contract.test.mjs
@@ -1164,7 +1164,7 @@ node --test tests/commands-contract.test.mjs
 
 Attendu : ÉCHEC — les trois commandes n'existent pas.
 
-- [ ] **Step 3: Écrire `commands/idd/propose.md`**
+- [x] **Step 3: Écrire `commands/idd/propose.md`**
 
 ```markdown
 ---
@@ -1210,7 +1210,7 @@ criteria turns out to apply, stop and tell the user to recreate the change
 with the full schema. It is cheap now and expensive after `tasks.md` exists.
 ```
 
-- [ ] **Step 4: Écrire `commands/idd/verify.md`**
+- [x] **Step 4: Écrire `commands/idd/verify.md`**
 
 ```markdown
 ---
@@ -1231,7 +1231,7 @@ Report PASS, PASS WITH WARNINGS, or FAIL, and write the outcome into
 `verification.md`. On FAIL, name the artifact to go back to.
 ```
 
-- [ ] **Step 5: Écrire `commands/idd/archive.md`**
+- [x] **Step 5: Écrire `commands/idd/archive.md`**
 
 ```markdown
 ---
@@ -1255,7 +1255,7 @@ the answer to "what does this system do today" — it is the reason the pipeline
 exists.
 ```
 
-- [ ] **Step 6: Lancer les tests**
+- [x] **Step 6: Lancer les tests**
 
 ```bash
 node --test
@@ -1263,7 +1263,7 @@ node --test
 
 Attendu : les 5 nouveaux tests passent, et toute la suite avec.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add commands/idd/ tests/commands-contract.test.mjs
