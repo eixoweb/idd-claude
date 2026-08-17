@@ -139,7 +139,14 @@ L'évaluateur **rejoue lui-même** les assertions déclarées dans les tâches `
 
 Modèle : **sonnet par défaut**, configurable. Écart assumé avec opsx, qui utilise haiku — économiser sur l'étape qui sert de garde-fou est le mauvais arbitrage.
 
-Les dimensions notées sont activées dynamiquement par la configuration, et les poids renormalisés à 100 quand une dimension est désactivée.
+Les dimensions notées sont activées dynamiquement par la configuration ; une dimension désactivée n'est ni évaluée ni exigée.
+
+**Verdict par planchers, pas par moyenne pondérée.** Chaque dimension a un minimum ; une seule dimension sous son plancher suffit à rendre `RETRY`, quelles que soient les autres. Ce choix écarte délibérément le total pondéré d'opsx (`Spec × 0,4 + Runtime × 0,4 + Code × 0,2`, seuil dans le contrat) pour deux raisons :
+
+- **L'effet de compensation.** Une moyenne autorise une dimension faible à être rachetée par les autres. Un groupe à spec 90 / runtime 100 / visual 60 / code 85 obtient 86 et passerait — alors que 4 assertions visuelles sur 10 échouent, donc que le rendu est faux. C'est exactement le faux positif que ce projet existe pour éviter.
+- **La calibration est invérifiable.** Des poids et un seuil ont l'air rigoureux mais ne reposent sur rien ; un total de 86 n'a pas de signification absolue.
+
+Les planchers, eux, expriment des règles vérifiables. `runtime: 100` dit « aucun test en échec ne passe le gate » — une propriété binaire, sur laquelle une pondération n'aurait aucun sens. Idem pour le visuel : une assertion mesurée qui casse est un fait, pas une note. Seules `spec` et `code` gardent un plancher gradué, parce qu'elles reposent sur une appréciation du modèle et non sur une exécution.
 
 ### Gate visuel
 
@@ -175,8 +182,12 @@ verification:
   spec_as_source: false        # Gherkin exécutable — OFF par défaut
   visual: true                 # gate dev-browser
   subagents: true              # un sous-agent par tâche
-  weights: { spec: 30, runtime: 30, visual: 20, code: 20, acceptance: 25 }
-  threshold: 80
+  floors:                      # une dimension sous son plancher → RETRY
+    spec: 80                   # gradué : appréciation du modèle
+    runtime: 100               # binaire : aucun test en échec
+    visual: 100                # binaire : aucune assertion mesurée en échec
+    code: 60                   # gradué : tolérance sur le MEDIUM/LOW résiduel
+    acceptance: 100            # binaire — ignoré si spec_as_source: false
   max_iterations: 5
   evaluator_model: sonnet
 
