@@ -22,8 +22,6 @@
 
 ---
 
-
-
 ## Structure des fichiers
 
 
@@ -47,8 +45,6 @@
 `scripts/lib/` contient toute la logique ; `scripts/promote.mjs` ne fait que lire les arguments et afficher le résultat. C'est ce découpage qui rend le cœur testable sans lancer de processus.
 
 ---
-
-
 
 ### Task 1: Prérequis et squelette du plugin
 
@@ -191,14 +187,18 @@ which targets OpenCode.
 ## Install
 
 ```
-/plugin marketplace add <owner>/idd-claude
+
+/plugin marketplace add /idd-claude
 /plugin install idd-claude@idd-claude
+
 ```
 
 Then, from the root of a project you want to use it in:
 
 ```
+
 /idd:init
+
 ```
 
 This copies the schema into `openspec/schemas/idd-claude/` and writes
@@ -228,8 +228,6 @@ git commit -m "feat: plugin manifests and test harness"
 ```
 
 ---
-
-
 
 ### Task 2: Le schéma OpenSpec
 
@@ -386,8 +384,6 @@ git commit -m "feat: idd-claude OpenSpec schema with verification artifact"
 
 ---
 
-
-
 ### Task 3: Détection de version d'OpenSpec
 
 **Files:**
@@ -516,8 +512,6 @@ git commit -m "feat: detect and compare the installed OpenSpec version"
 ```
 
 ---
-
-
 
 ### Task 4: Promotion du schéma
 
@@ -699,8 +693,6 @@ git commit -m "feat: promote the schema into a target project with drift stampin
 
 ---
 
-
-
 ### Task 5: Le point d'entrée et la commande /idd:init
 
 **Files:**
@@ -867,8 +859,7 @@ Set up this project for the idd-claude workflow.
 3. Confirm `openspec schemas` lists `idd-claude`, then report:
    - where the schema was installed,
    - whether the config was created or left untouched,
-   - that `verification.spec_as_source` and `verification.mutation` are off by
-     default, and how to enable each.
+   - that `verification.spec_as_source` is off by default and how to enable it.
 
 Never edit files under `openspec/schemas/idd-claude/` in a target project:
 they are a copy, and the next promotion overwrites them.
@@ -890,8 +881,6 @@ git commit -m "feat: /idd:init command and schema promotion entry point"
 ```
 
 ---
-
-
 
 ### Task 6: Port des skills et agents amont
 
@@ -1084,8 +1073,6 @@ git commit -m "feat: port upstream skills and adversarial agents to the Claude C
 ```
 
 ---
-
-
 
 ## Auto-relecture
 

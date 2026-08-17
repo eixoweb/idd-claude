@@ -26,6 +26,7 @@ Trois lignes de prose, aucune mention de test. C'est le trou que ce projet combl
 | Périmètre v1 | Toutes les briques amont, `spec-as-source` **optionnel et OFF par défaut** |
 | Diagrammes | `c4-diagrams` (Mermaid) pour les artefacts ; `diagram-design` reste un plugin séparé pour les livrables de communication |
 | Vérification visuelle | **Ajout** : gate dev-browser à assertions mesurées |
+| Entrée dans le pipeline | `/idd:explore` adossé à `superpowers:brainstorming`, contrat de sortie redéfini ; l'`opsx-explore` natif n'est pas porté |
 | Stack v1 | JavaScript/TypeScript ; PHP en v2 |
 | Rapport à l'amont | Fork dur, Claude Code uniquement — `.opencode/` et `opencode.json` supprimés |
 | Distribution du schéma | Plugin porteur + commande de promotion (modèle opsx), migration possible vers les *stores* OpenSpec quand ils sortiront de beta |
@@ -86,6 +87,50 @@ proposal ─┬────────────────────> spe
 `verification` est un **artefact neuf**, pas une simple commande : il produit un `verification.md` (verdict + journal des itérations), visible dans `openspec status` et relisible en PR au même titre que la spec.
 
 **Limite assumée** : les dépendances `requires:` du schéma gouvernent la création des artefacts, mais `archive` est une commande CLI, pas un nœud du graphe. Le blocage de l'archivage tant que `verification` n'est pas au vert est un contrôle dans `/idd:archive`, contournable en appelant `openspec archive` directement. C'est un garde-fou, pas une serrure.
+
+## Entrée dans le pipeline et niveaux de changement
+
+Le pipeline complet est disproportionné pour la majorité des changements — le README amont le dit lui-même : ce type de schéma n'est « pas un bon choix pour les correctifs tactiques, les changements de docs, les bumps de dépendances ». Il faut donc une entrée qui **empêche** le pipeline de tourner quand il ne le mérite pas. C'est le rôle de `/idd:explore`.
+
+### `/idd:explore` s'adosse à `superpowers:brainstorming`
+
+`explore` n'est **pas un artefact** et ne peut pas l'être : le schéma gouverne des artefacts, or explore n'en produit aucun. C'est une commande, jamais une entrée de `schema.yaml`, et elle est facultative — ne pas l'utiliser ne saute aucune étape.
+
+L'amont embarque un `opsx-explore` généré par le CLI OpenSpec (`author: openspec`), qui se décrit comme *« a stance, not a workflow — no fixed steps, no required sequence, no mandatory outputs »*. Il n'est **pas porté** : `brainstorming` le subsume, et apporte en plus ce dont on a besoin ici — la classification.
+
+### Le classificateur est le routeur de coût
+
+| Niveau | Ce qui tourne | Ordre de grandeur |
+|---|---|---|
+| **Spike** | aucune commande, aucun dossier de changement — on répond et on s'arrête | ~1 session |
+| **Bounded** | `proposal → specs → tasks → apply`, `design` et `adr` sautés, `subagents: false` (un groupe, un appel évaluateur) | ~5 sessions |
+| **Architectural** | tout, sous-agent par tâche, évaluateur par groupe | 20-30 sessions |
+
+L'intérêt de faire porter ce tri par une conversation plutôt que par un drapeau de configuration : le niveau se décide **après** avoir compris le changement, pas avant.
+
+### Contrat de sortie redéfini
+
+L'état terminal natif de `brainstorming` produirait des artefacts concurrents de ceux d'OpenSpec — un design doc dans `docs/superpowers/specs/` face à `design.md`, et `writing-plans` face à `tasks.md`. `/idd:explore` le redéfinit :
+
+- **spike** → on rapporte la recommandation, aucun dossier de changement ;
+- **bounded** → design court en conversation, puis `/idd:propose` avec `design` et `adr` sautés — au lieu du « implémente directement » de la skill, qui court-circuiterait le pipeline ;
+- **architectural** → design validé en sections, puis **ni doc écrit ni `writing-plans`** : passage de main à `/idd:propose`, qui rend le même contenu dans les artefacts OpenSpec.
+
+Le contenu produit est identique ; seule la destination change. Rien n'est écrit deux fois.
+
+Cette surcharge est légitime — Superpowers pose lui-même que les instructions du projet priment sur les skills — mais elle reste une surcharge, dont le risque est consigné plus bas.
+
+### Entrée directe
+
+`/idd:propose` reste appelable sans passer par explore, pour les changements dont le périmètre est déjà clair. Il porte alors sa propre garde minimale : pas de dossier de changement pour un correctif tactique, un changement de docs ou un bump de dépendance ; `design` et `adr` sautés si aucun de leurs critères ne s'applique.
+
+### Companion visuel
+
+Le companion visuel de `brainstorming` devient disponible par ce biais, sans câblage supplémentaire. Il ne se déclenche que sur une question réellement visuelle — choisir entre deux dispositions de bloc, comparer deux maquettes — et jamais sur du conceptuel. Le dispositif devient alors cohérent d'un bout à l'autre : **on choisit avec le navigateur pendant explore, on vérifie avec le navigateur pendant apply**.
+
+### Question ouverte
+
+Le schéma n'a **aucun champ d'optionalité** : que `design.md` soit facultatif est écrit en prose dans son instruction (« create only if any apply »), pas dans la structure. Or `adr` exige `design` et `tasks` exige `adr`. Il n'est donc pas établi qu'OpenSpec laisse réellement sauter ces deux artefacts sans bloquer la chaîne, ce dont dépend le niveau *bounded*. À vérifier empiriquement en tête du Plan 2 ; repli en cas de réponse négative : un second schéma allégé (`idd-claude-lite` : proposal → specs → tasks) sélectionné par `config.yaml`.
 
 ## Phase apply
 
@@ -262,5 +307,7 @@ Principe directeur : **un `PASS` obtenu en sautant une dimension est pire qu'un 
 **Le runner de tests d'idd-claude n'est pas mutable en l'état.** Ce repo teste avec `node --test`, que Stryker ne pilote pas nativement (il supporte jest, vitest, mocha, jasmine, cucumber). Appliquer la dimension `mutation` au projet lui-même imposerait soit de basculer ses tests sur vitest, soit de passer par le `command-runner` générique de Stryker — plus lent et moins granulaire. À trancher au Plan 2 ; sans incidence sur les projets consommateurs, qui utilisent leur propre runner.
 
 **Coût du mutation testing.** Même scopé au diff par `--since`, un run reste bien plus lent qu'une suite de tests. C'est la raison de le laisser désactivé par défaut plutôt que de le subir sur chaque groupe de chaque projet.
+
+**Surcharge de l'état terminal de `brainstorming`.** `/idd:explore` redéfinit la sortie d'une skill tierce dont l'instruction est explicite (*« Terminal states are path-bound. Architectural: the ONLY skill you invoke after brainstorming is writing-plans »*). La surcharge est légitime — les instructions du projet priment sur les skills — mais une version future de Superpowers peut durcir ce point, et la commande devra suivre. C'est le prix de s'appuyer sur une skill tierce plutôt que d'en écrire une à nous. Le `HARD-GATE` de la skill n'est pas en cause : il interdit d'implémenter avant approbation, pas de rediriger la sortie.
 
 **Suivi de l'amont.** Le fork dur assume de ne pas rejouer les améliorations d'intent-driven-template. La divergence est massive dès le départ (gates durs, évaluateur, gate visuel), ce qui rend un merge amont illusoire de toute façon.
