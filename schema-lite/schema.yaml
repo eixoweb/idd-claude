@@ -204,6 +204,10 @@ apply:
   requires:
     - tasks
   tracks: tasks.md
-  instruction: |
-    Read context files, work through pending tasks, mark complete as you go.
-    Pause if you hit blockers or need clarification.
+  instruction: >
+    Do not implement these tasks directly. Run /idd:apply, which enforces the
+    TDD gates and dispatches the evaluator at the end of each task group.
+
+
+    Implementing without it produces a change that has never been verified
+    against its own specs.

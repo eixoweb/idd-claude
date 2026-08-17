@@ -1,6 +1,7 @@
 name: idd-claude
 version: 1
-description: Intent-driven OpenSpec workflow for Claude Code - proposal -> specs -> design -> adr -> tasks -> verification
+description: Intent-driven OpenSpec workflow for Claude Code - proposal -> specs
+  -> design -> adr -> tasks -> verification
 artifacts:
   - id: proposal
     generates: proposal.md
@@ -19,7 +20,8 @@ artifacts:
       capabilities, modifications, or removals. Mark breaking changes with
       **BREAKING**.
 
-      - **Capabilities**: Identify which behaviour specs will be created or modified:
+      - **Capabilities**: Identify which behaviour specs will be created or
+      modified:
         - **New Capabilities**: List capabilities being introduced. Each becomes a new `specs/<name>/spec.md`. Use kebab-case names (e.g., `user-auth`, `data-export`).
         - **Modified Capabilities**: List existing capabilities whose behaviour is changing. Only include if spec-level behaviour changes, not just implementation details. Each needs an OpenSpec Markdown delta file at `specs/<name>/spec.md`. Check `openspec/specs/` for existing spec names. Leave empty if no behaviour changes.
       - **Impact**: Affected code, APIs, dependencies, or systems.
@@ -162,13 +164,13 @@ artifacts:
       Prior decisions (read existing ADRs first):
 
       Before writing, list every file in <repo>/adr/. Build the supersession
-      graph from each ADR's Supersedes field - an ADR is no longer in force if
-      a later ADR's Supersedes points at it. Only the currently-in-force ADRs
+      graph from each ADR's Supersedes field - an ADR is no longer in force if a
+      later ADR's Supersedes points at it. Only the currently-in-force ADRs
       (accepted, not superseded) constrain this design. Older superseded ADRs
       are historical context only and MUST NOT be treated as live commitments.
       New design choices MUST be coherent with the in-force set. If a current
-      ADR needs to be revisited, do not propose modifying it; flag it under
-      Open Questions and let the adr step record a new superseding ADR.
+      ADR needs to be revisited, do not propose modifying it; flag it under Open
+      Questions and let the adr step record a new superseding ADR.
 
 
       Sections:
@@ -221,16 +223,15 @@ artifacts:
       ADR file under any circumstance, not its Status, not its body, not its
       date. To change a previously accepted decision, record a NEW ADR whose
       Status is "accepted, supersedes ADR-NNNN" and whose `Supersedes:` field
-      names the prior one. Design consumers derive what is currently in force
-      by walking Supersedes links across the folder. The prior ADR's contents
-      stay frozen as a historical record.
+      names the prior one. Design consumers derive what is currently in force by
+      walking Supersedes links across the folder. The prior ADR's contents stay
+      frozen as a historical record.
 
 
       Process:
 
       1. Read every existing ADR in <repo>/adr/. Build the supersession graph
-      from each ADR's Supersedes field. Note the highest sequence number in
-      use.
+      from each ADR's Supersedes field. Note the highest sequence number in use.
 
       2. Re-read design.md. Identify decisions that meet ALL of these:
 
@@ -246,17 +247,17 @@ artifacts:
       3. For each qualifying decision, create a NEW repository-level file at
       <repo>/adr/NNNN-kebab-title.md, where NNNN is a 4-digit sequence one
       greater than the highest existing. Include title, Status, Date, optional
-      Supersedes, and MADR-short sections: Context, Decision, and
-      Consequences. If this decision replaces a prior in-force ADR, set Status to
-      "accepted, supersedes ADR-NNNN", populate the `Supersedes:` field, and
-      explain in Context why the prior decision is being revisited. Do NOT
-      touch the prior ADR's file.
+      Supersedes, and MADR-short sections: Context, Decision, and Consequences.
+      If this decision replaces a prior in-force ADR, set Status to "accepted,
+      supersedes ADR-NNNN", populate the `Supersedes:` field, and explain in
+      Context why the prior decision is being revisited. Do NOT touch the prior
+      ADR's file.
 
-      4. Write openspec/changes/<change>/adr.md using the template. The
-      manifest MUST state that ADR review completed for this change, list the
-      in-force ADR context reviewed, and reference every repository-level ADR
-      file created for this change. It MUST NOT duplicate full Context,
-      Decision, or Consequences content from repository-level ADR files.
+      4. Write openspec/changes/<change>/adr.md using the template. The manifest
+      MUST state that ADR review completed for this change, list the in-force
+      ADR context reviewed, and reference every repository-level ADR file
+      created for this change. It MUST NOT duplicate full Context, Decision, or
+      Consequences content from repository-level ADR files.
 
       5. If nothing meets the bar, do not invent ADRs. The manifest MUST
       explicitly state that no major durable architectural decisions were
@@ -264,8 +265,8 @@ artifacts:
 
 
       Filename convention: NNNN-kebab-title.md (e.g.,
-      0042-use-postgres-for-catalog.md). Sequence is monotonic across the
-      whole repo and never reused.
+      0042-use-postgres-for-catalog.md). Sequence is monotonic across the whole
+      repo and never reused.
     requires:
       - design
   - id: tasks
@@ -302,7 +303,6 @@ artifacts:
     requires:
       - specs
       - adr
-
   - id: verification
     generates: verification.md
     description: Evaluator verdict and iteration log for the change
@@ -324,6 +324,10 @@ apply:
   requires:
     - tasks
   tracks: tasks.md
-  instruction: |
-    Read context files, work through pending tasks, mark complete as you go.
-    Pause if you hit blockers or need clarification.
+  instruction: >
+    Do not implement these tasks directly. Run /idd:apply, which enforces the
+    TDD gates and dispatches the evaluator at the end of each task group.
+
+
+    Implementing without it produces a change that has never been verified
+    against its own specs.
