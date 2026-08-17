@@ -1,0 +1,9 @@
+{
+  "name": "idd-claude",
+  "version": "0.1.0",
+  "description": "OpenSpec workflow for Claude Code with enforced Superpowers TDD, a scored evaluator gate, and measured visual verification.",
+  "author": { "name": "Matthieu Guirlinger" },
+  "repository": "https://github.com/eixoweb/idd-claude",
+  "license": "MIT",
+  "keywords": ["openspec", "superpowers", "tdd", "spec-driven", "code-review"]
+}

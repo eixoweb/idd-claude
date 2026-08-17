@@ -63,7 +63,7 @@
 - Consumes: rien
 - Produces: `plugin.json.version` (chaîne semver) que la Task 4 lit pour estampiller le schéma promu ; le script npm `test` que toutes les tâches suivantes utilisent.
 
-- [ ] **Step 1: Mettre à jour OpenSpec et vérifier**
+- [x] **Step 1: Mettre à jour OpenSpec et vérifier**
 
 ```bash
 npm install -g @fission-ai/openspec@latest
@@ -72,7 +72,7 @@ openspec --version
 
 Attendu : `1.9.0` ou supérieur. Si la sortie affiche encore `1.2.0`, vérifier que le `openspec` résolu par le PATH est bien celui de npm (`which openspec`).
 
-- [ ] **Step 2: Écrire le test qui échoue**
+- [x] **Step 2: Écrire le test qui échoue**
 
 Créer `tests/plugin-manifest.test.mjs` :
 
@@ -99,15 +99,15 @@ test('marketplace.json lists the plugin at the repo root', () => {
 })
 ```
 
-- [ ] **Step 3: Lancer le test pour vérifier qu'il échoue**
+- [x] **Step 3: Lancer le test pour vérifier qu'il échoue**
 
 ```bash
-node --test tests/
+node --test
 ```
 
 Attendu : ÉCHEC avec `ENOENT ... .claude-plugin/plugin.json` — les manifestes n'existent pas encore.
 
-- [ ] **Step 4: Créer les manifestes et le package**
+- [x] **Step 4: Créer les manifestes et le package**
 
 `package.json` :
 
@@ -118,7 +118,7 @@ Attendu : ÉCHEC avec `ENOENT ... .claude-plugin/plugin.json` — les manifestes
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test tests/"
+    "test": "node --test"
   },
   "devDependencies": {
     "yaml": "^2.4.0"
@@ -134,7 +134,7 @@ Attendu : ÉCHEC avec `ENOENT ... .claude-plugin/plugin.json` — les manifestes
   "version": "0.1.0",
   "description": "OpenSpec workflow for Claude Code with enforced Superpowers TDD, a scored evaluator gate, and measured visual verification.",
   "author": { "name": "Matthieu Guirlinger" },
-  "repository": "https://github.com/mguirlinger/idd-claude",
+  "repository": "https://github.com/eixoweb/idd-claude",
   "license": "MIT",
   "keywords": ["openspec", "superpowers", "tdd", "spec-driven", "code-review"]
 }
@@ -188,7 +188,7 @@ which targets OpenCode.
 
 ```
 
-/plugin marketplace add /idd-claude
+/plugin marketplace add eixoweb/idd-claude
 /plugin install idd-claude@idd-claude
 
 ```
@@ -211,16 +211,16 @@ See `docs/superpowers/specs/` for the design documents and
 `docs/superpowers/plans/` for the implementation plans.
 ```
 
-- [ ] **Step 5: Installer les dépendances et lancer les tests**
+- [x] **Step 5: Installer les dépendances et lancer les tests**
 
 ```bash
 npm install
-node --test tests/
+node --test
 ```
 
 Attendu : les 2 tests passent.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add package.json package-lock.json .claude-plugin/ .gitignore LICENSE README.md tests/
@@ -245,7 +245,7 @@ git commit -m "feat: plugin manifests and test harness"
 
 **Note de conception.** L'artefact `verification` dépend de `tasks`, pas de `apply` : `apply` est un bloc de premier niveau du schéma, pas un artefact, et rien ne garantit qu'un artefact puisse le référencer. Le fait que l'implémentation soit terminée est vérifié par la commande `/idd:verify` (toutes les cases de `tasks.md` cochées), pas par le graphe.
 
-- [ ] **Step 1: Écrire le test qui échoue**
+- [x] **Step 1: Écrire le test qui échoue**
 
 Créer `tests/schema-graph.test.mjs` :
 
@@ -297,15 +297,15 @@ test('every artifact points at a template file that exists', () => {
 })
 ```
 
-- [ ] **Step 2: Lancer le test pour vérifier qu'il échoue**
+- [x] **Step 2: Lancer le test pour vérifier qu'il échoue**
 
 ```bash
-node --test tests/schema-graph.test.mjs
+node --test
 ```
 
 Attendu : ÉCHEC avec `ENOENT ... schema/schema.yaml`.
 
-- [ ] **Step 3: Écrire le schéma**
+- [x] **Step 3: Écrire le schéma**
 
 Partir du `schema.yaml` amont (`openspec/schemas/intent-driven/schema.yaml` du repo intent-driven-template), qui a déjà les cinq premiers artefacts avec leurs instructions rédigées. Trois modifications :
 
@@ -367,15 +367,15 @@ Les gabarits `templates/proposal.md`, `spec.md`, `design.md`, `adr.md`, `tasks.m
 
 `schema/README.md` : nom du schéma, la ligne `schema: idd-claude` à mettre dans `openspec/config.yaml`, le graphe d'artefacts, et un renvoi vers la spec de conception.
 
-- [ ] **Step 4: Lancer les tests**
+- [x] **Step 4: Lancer les tests**
 
 ```bash
-node --test tests/
+node --test
 ```
 
 Attendu : les 7 tests passent.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add schema/ tests/schema-graph.test.mjs
@@ -396,7 +396,7 @@ git commit -m "feat: idd-claude OpenSpec schema with verification artifact"
 - Consumes: rien
 - Produces: `MINIMUM_OPENSPEC` (chaîne `'1.9.0'`), `parseVersion(output: string) => {major, minor, patch} | null`, `isAtLeast(version: string, minimum: string) => boolean`, `detectOpenspec(run?: () => string) => {installed: boolean, version: string | null, satisfies: boolean}`. La Task 5 appelle `detectOpenspec()`.
 
-- [ ] **Step 1: Écrire le test qui échoue**
+- [x] **Step 1: Écrire le test qui échoue**
 
 Créer `tests/openspec-version.test.mjs` :
 
@@ -448,15 +448,15 @@ test('detectOpenspec reports a missing binary instead of throwing', () => {
 })
 ```
 
-- [ ] **Step 2: Lancer le test pour vérifier qu'il échoue**
+- [x] **Step 2: Lancer le test pour vérifier qu'il échoue**
 
 ```bash
-node --test tests/openspec-version.test.mjs
+node --test
 ```
 
 Attendu : ÉCHEC — `Cannot find module ... scripts/lib/openspec-version.mjs`.
 
-- [ ] **Step 3: Écrire l'implémentation minimale**
+- [x] **Step 3: Écrire l'implémentation minimale**
 
 Créer `scripts/lib/openspec-version.mjs` :
 
@@ -496,15 +496,15 @@ export function detectOpenspec(run = defaultRun) {
 }
 ```
 
-- [ ] **Step 4: Lancer les tests**
+- [x] **Step 4: Lancer les tests**
 
 ```bash
-node --test tests/
+node --test
 ```
 
 Attendu : les 6 nouveaux tests passent, les précédents aussi.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add scripts/lib/openspec-version.mjs tests/openspec-version.test.mjs
@@ -525,7 +525,7 @@ git commit -m "feat: detect and compare the installed OpenSpec version"
 - Consumes: `plugin.json.version` (Task 1), le dossier `schema/` (Task 2)
 - Produces: `SCHEMA_NAME` (chaîne `'idd-claude'`), `defaultConfig() => string`, `promoteSchema({pluginRoot, projectRoot, pluginVersion}) => {schemaPath, configPath, configCreated}`, `promotedVersion(projectRoot) => string | null`, `hasDrifted(projectRoot, pluginVersion) => boolean`. La Task 5 appelle `promoteSchema` et `hasDrifted`.
 
-- [ ] **Step 1: Écrire le test qui échoue**
+- [x] **Step 1: Écrire le test qui échoue**
 
 Créer `tests/promote-schema.test.mjs` :
 
@@ -605,15 +605,15 @@ test('defaultConfig is parseable YAML with spec_as_source off', () => {
 })
 ```
 
-- [ ] **Step 2: Lancer le test pour vérifier qu'il échoue**
+- [x] **Step 2: Lancer le test pour vérifier qu'il échoue**
 
 ```bash
-node --test tests/promote-schema.test.mjs
+node --test
 ```
 
 Attendu : ÉCHEC — `Cannot find module ... scripts/lib/promote-schema.mjs`.
 
-- [ ] **Step 3: Écrire l'implémentation minimale**
+- [x] **Step 3: Écrire l'implémentation minimale**
 
 Créer `scripts/lib/promote-schema.mjs` :
 
@@ -676,15 +676,15 @@ export function hasDrifted(projectRoot, pluginVersion) {
 }
 ```
 
-- [ ] **Step 4: Lancer les tests**
+- [x] **Step 4: Lancer les tests**
 
 ```bash
-node --test tests/
+node --test
 ```
 
 Attendu : les 6 nouveaux tests passent.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add scripts/lib/promote-schema.mjs tests/promote-schema.test.mjs
@@ -707,7 +707,7 @@ git commit -m "feat: promote the schema into a target project with drift stampin
 - Consumes: `detectOpenspec` (Task 3), `promoteSchema` / `hasDrifted` / `SCHEMA_NAME` (Task 4), `plugin.json.version` (Task 1)
 - Produces: le binaire `node scripts/promote.mjs <projectRoot>`, qui sort en code 0 en cas de succès et en code 1 avec un message sur stderr si OpenSpec est absent ou trop ancien.
 
-- [ ] **Step 1: Écrire le test qui échoue**
+- [x] **Step 1: Écrire le test qui échoue**
 
 Créer `tests/fixtures/js-toy/package.json` :
 
@@ -777,15 +777,15 @@ test('promote.mjs refuses to run when OpenSpec is too old', () => {
 })
 ```
 
-- [ ] **Step 2: Lancer le test pour vérifier qu'il échoue**
+- [x] **Step 2: Lancer le test pour vérifier qu'il échoue**
 
 ```bash
-node --test tests/init-end-to-end.test.mjs
+node --test
 ```
 
 Attendu : ÉCHEC — `Cannot find module ... scripts/promote.mjs`.
 
-- [ ] **Step 3: Écrire le point d'entrée**
+- [x] **Step 3: Écrire le point d'entrée**
 
 Créer `scripts/promote.mjs` :
 
@@ -832,7 +832,7 @@ console.log(configCreated ? `Config written to ${configPath}` : `Config left unt
 if (drifted) console.log('The previously promoted schema was from a different plugin version — it has been refreshed.')
 ```
 
-- [ ] **Step 4: Écrire la commande**
+- [x] **Step 4: Écrire la commande**
 
 Créer `commands/idd/init.md` :
 
@@ -865,15 +865,15 @@ Never edit files under `openspec/schemas/idd-claude/` in a target project:
 they are a copy, and the next promotion overwrites them.
 ```
 
-- [ ] **Step 5: Lancer les tests**
+- [x] **Step 5: Lancer les tests**
 
 ```bash
-node --test tests/
+node --test
 ```
 
 Attendu : tous les tests passent, dont les 2 nouveaux. Le second exige qu'`openspec` soit dans le PATH en version ≥ 1.9.0 — c'est ce qu'a installé la Task 1.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add scripts/promote.mjs commands/ tests/fixtures/ tests/init-end-to-end.test.mjs
@@ -899,7 +899,7 @@ Les deux agents sont portés dans la même tâche que la skill `adversarial-auth
 - Consumes: rien
 - Produces: `parseFrontmatter(source: string) => object | null`, exporté par `scripts/lib/frontmatter.mjs`. Les Plans 2 et 3 ajoutent des skills dans `skills/` et héritent de ce test de conformité.
 
-- [ ] **Step 1: Écrire le test qui échoue**
+- [x] **Step 1: Écrire le test qui échoue**
 
 Créer `tests/skills-conformance.test.mjs` :
 
@@ -976,15 +976,15 @@ test('the adversarial agents are ported with Claude Code frontmatter', () => {
 })
 ```
 
-- [ ] **Step 2: Lancer le test pour vérifier qu'il échoue**
+- [x] **Step 2: Lancer le test pour vérifier qu'il échoue**
 
 ```bash
-node --test tests/skills-conformance.test.mjs
+node --test
 ```
 
 Attendu : ÉCHEC — `Cannot find module ... scripts/lib/frontmatter.mjs`.
 
-- [ ] **Step 3: Écrire le parseur de frontmatter**
+- [x] **Step 3: Écrire le parseur de frontmatter**
 
 Créer `scripts/lib/frontmatter.mjs` :
 
@@ -1001,7 +1001,7 @@ export function parseFrontmatter(source) {
 }
 ```
 
-- [ ] **Step 4: Copier les skills depuis l'amont**
+- [x] **Step 4: Copier les skills depuis l'amont**
 
 Cloner l'amont dans un répertoire temporaire et copier les neuf dossiers :
 
@@ -1020,7 +1020,7 @@ Puis, dans chaque `SKILL.md` copié, remplacer les chemins propres à OpenCode :
 
 Le test de l'étape 1 échoue tant qu'il reste une occurrence, ce qui rend la relecture inutile : lancer le test suffit à trouver les oublis.
 
-- [ ] **Step 4b: Porter les deux agents adversariaux**
+- [x] **Step 4b: Porter les deux agents adversariaux**
 
 ```bash
 mkdir -p agents
@@ -1057,15 +1057,15 @@ model: opus
 > Weigh its verdicts accordingly.
 ```
 
-- [ ] **Step 5: Lancer les tests**
+- [x] **Step 5: Lancer les tests**
 
 ```bash
-node --test tests/
+node --test
 ```
 
 Attendu : les 4 nouveaux tests passent. Si le test de conformité signale un `name` de frontmatter qui ne correspond pas à son dossier, renommer le dossier plutôt que le frontmatter — c'est le frontmatter qui est référencé par les autres skills.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add skills/ agents/ skills-lock.json scripts/lib/frontmatter.mjs tests/skills-conformance.test.mjs
