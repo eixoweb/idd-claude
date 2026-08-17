@@ -58,3 +58,9 @@ test('the evaluator probes the page through the CLI rather than by eye', () => {
   assert.match(body, /visual-cli\.mjs/)
   assert.match(body, /UNKNOWN/, 'an unreachable dev stack must be UNKNOWN, not 0')
 })
+
+test('the evaluator runs the mutation tool through the CLI', () => {
+  const body = readFileSync(agentPath, 'utf8')
+  assert.match(body, /mutation-cli\.mjs/)
+  assert.match(body, /never 0|not 0/i)
+})

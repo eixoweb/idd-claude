@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { readFileSync } from 'node:fs'
-import { parseTasks } from './tasks.mjs'
+import { parseTasks } from './lib/tasks.mjs'
 
 const [path] = process.argv.slice(2)
 if (!path) {
