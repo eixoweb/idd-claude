@@ -59,3 +59,69 @@ export function parseVisualSpec(lines) {
 
   return { url, viewport, assertions }
 }
+
+const NUMERIC = /^(-?\d+(?:\.\d+)?)([a-z%]*)$/i
+
+function holds(assertion, actual) {
+  if (actual === null || actual === undefined) {
+    return { ok: false, reason: `no element matched "${assertion.selector}"` }
+  }
+
+  if (assertion.kind === 'count') {
+    const ok = Number(actual) === assertion.expected
+    return { ok, reason: ok ? null : `expected ${assertion.expected}, got ${actual}` }
+  }
+
+  const expected = String(assertion.expected).match(NUMERIC)
+  const measured = String(actual).match(NUMERIC)
+
+  if (expected && measured && expected[2] === measured[2]) {
+    const tolerance = assertion.tolerance ?? 0
+    const ok = Math.abs(Number(measured[1]) - Number(expected[1])) <= tolerance
+    return { ok, reason: ok ? null : `expected ${assertion.expected}, got ${actual}` }
+  }
+
+  const ok = String(actual) === String(assertion.expected)
+  return { ok, reason: ok ? null : `expected ${assertion.expected}, got ${actual}` }
+}
+
+export function evaluateVisual(assertions, measured) {
+  const failures = []
+
+  assertions.forEach((assertion, index) => {
+    const { ok, reason } = holds(assertion, measured[index])
+    if (!ok) {
+      const property = assertion.property ?? 'count'
+      failures.push({
+        selector: assertion.selector,
+        property,
+        message: `${assertion.selector} ${property}: ${reason}`,
+      })
+    }
+  })
+
+  const passed = assertions.length - failures.length
+  return { score: Math.round((100 * passed) / assertions.length), failures }
+}
+
+export function buildProbeScript(spec, baseUrl) {
+  const target = new URL(spec.url, baseUrl).toString()
+  const probes = spec.assertions.map((a) =>
+    a.kind === 'count'
+      ? { kind: 'count', selector: a.selector }
+      : { kind: 'style', selector: a.selector, property: a.property },
+  )
+
+  return `const page = await browser.getPage("idd-visual");
+await page.setViewportSize({ width: ${spec.viewport}, height: 900 });
+await page.goto(${JSON.stringify(target)}, { waitUntil: "networkidle" });
+const probes = ${JSON.stringify(probes)};
+const measured = await page.evaluate((probes) => probes.map((probe) => {
+  if (probe.kind === "count") return document.querySelectorAll(probe.selector).length;
+  const el = document.querySelector(probe.selector);
+  if (!el) return null;
+  return getComputedStyle(el).getPropertyValue(probe.property).trim();
+}), probes);
+console.log(JSON.stringify({ url: ${JSON.stringify(target)}, measured }));
+`
+}
