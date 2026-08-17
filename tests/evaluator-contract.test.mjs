@@ -64,3 +64,9 @@ test('the evaluator runs the mutation tool through the CLI', () => {
   assert.match(body, /mutation-cli\.mjs/)
   assert.match(body, /never 0|not 0/i)
 })
+
+test('the evaluator runs the acceptance suite through the CLI', () => {
+  const body = readFileSync(agentPath, 'utf8')
+  assert.match(body, /acceptance-cli\.mjs/)
+  assert.match(body, /spec_as_source/)
+})

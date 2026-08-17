@@ -15,6 +15,7 @@ which targets OpenCode.
 | Superpowers      | `/plugin install superpowers@claude-plugins-official` |
 | dev-browser      | `npm install -g dev-browser && dev-browser install` (for the `visual` dimension) |
 | Stryker          | `npm i -D @stryker-mutator/core @stryker-mutator/vitest-runner` in the target project — only for the `mutation` dimension, which is off by default |
+| cucumber-js      | `npm i -D @cucumber/cucumber` in the target project — only for the `acceptance` dimension, enabled by `spec_as_source` and off by default. `/idd:init --acceptance` scaffolds it |
 
 ## Install
 
