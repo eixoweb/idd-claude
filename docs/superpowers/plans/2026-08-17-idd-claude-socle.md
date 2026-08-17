@@ -18,35 +18,42 @@
 - **Nommage** : plugin et schéma s'appellent tous deux `idd-claude` ; l'espace de commandes est `/idd:`.
 - **Licence MIT.**
 - **Node 22+**, tests avec le lanceur intégré (`node --test`). Une seule dépendance de dev autorisée dans ce plan : `yaml`.
-- `verification.spec_as_source` vaut **`false`** par défaut dans toute config générée.
+- `verification.spec_as_source` et `verification.mutation` valent `false` par défaut dans toute config générée. Ce plan écrit ces clés ; ce qui les consomme (l'évaluateur) relève du Plan 2.
 
 ---
 
+
+
 ## Structure des fichiers
 
-| Fichier | Responsabilité |
-|---|---|
-| `.claude-plugin/plugin.json` | identité et version du plugin — la version pilote la détection de dérive |
-| `.claude-plugin/marketplace.json` | rend le repo installable par `/plugin marketplace add` |
-| `schema/schema.yaml` | le graphe d'artefacts OpenSpec |
-| `schema/templates/*.md` | un gabarit par artefact |
-| `schema/README.md` | comment activer le schéma |
-| `scripts/lib/openspec-version.mjs` | détection et comparaison de version d'OpenSpec |
-| `scripts/lib/promote-schema.mjs` | copie du schéma, écriture de config.yaml, détection de dérive |
-| `scripts/lib/frontmatter.mjs` | extraction du frontmatter d'un SKILL.md |
-| `scripts/promote.mjs` | point d'entrée CLI appelé par `/idd:init` |
-| `commands/idd/init.md` | le prompt de la commande |
-| `skills/*/SKILL.md` | les skills portées de l'amont |
-| `tests/*.test.mjs` | les tests |
-| `tests/fixtures/js-toy/` | projet fixture pour les tests de bout en bout |
+
+| Fichier                            | Responsabilité                                                           |
+| ---------------------------------- | ------------------------------------------------------------------------ |
+| `.claude-plugin/plugin.json`       | identité et version du plugin — la version pilote la détection de dérive |
+| `.claude-plugin/marketplace.json`  | rend le repo installable par `/plugin marketplace add`                   |
+| `schema/schema.yaml`               | le graphe d'artefacts OpenSpec                                           |
+| `schema/templates/*.md`            | un gabarit par artefact                                                  |
+| `schema/README.md`                 | comment activer le schéma                                                |
+| `scripts/lib/openspec-version.mjs` | détection et comparaison de version d'OpenSpec                           |
+| `scripts/lib/promote-schema.mjs`   | copie du schéma, écriture de config.yaml, détection de dérive            |
+| `scripts/lib/frontmatter.mjs`      | extraction du frontmatter d'un SKILL.md                                  |
+| `scripts/promote.mjs`              | point d'entrée CLI appelé par `/idd:init`                                |
+| `commands/idd/init.md`             | le prompt de la commande                                                 |
+| `skills/*/SKILL.md`                | les skills portées de l'amont                                            |
+| `tests/*.test.mjs`                 | les tests                                                                |
+| `tests/fixtures/js-toy/`           | projet fixture pour les tests de bout en bout                            |
+
 
 `scripts/lib/` contient toute la logique ; `scripts/promote.mjs` ne fait que lire les arguments et afficher le résultat. C'est ce découpage qui rend le cœur testable sans lancer de processus.
 
 ---
 
+
+
 ### Task 1: Prérequis et squelette du plugin
 
 **Files:**
+
 - Create: `package.json`
 - Create: `.claude-plugin/plugin.json`
 - Create: `.claude-plugin/marketplace.json`
@@ -56,6 +63,7 @@
 - Test: `tests/plugin-manifest.test.mjs`
 
 **Interfaces:**
+
 - Consumes: rien
 - Produces: `plugin.json.version` (chaîne semver) que la Task 4 lit pour estampiller le schéma promu ; le script npm `test` que toutes les tâches suivantes utilisent.
 
@@ -163,7 +171,7 @@ tests/fixtures/**/openspec/
 
 `README.md` :
 
-````markdown
+```markdown
 # idd-claude
 
 An OpenSpec workflow for Claude Code where the implementation phase is
@@ -201,7 +209,7 @@ warn you when the promoted schema and the plugin have drifted apart.
 
 See `docs/superpowers/specs/` for the design documents and
 `docs/superpowers/plans/` for the implementation plans.
-````
+```
 
 - [ ] **Step 5: Installer les dépendances et lancer les tests**
 
@@ -221,15 +229,19 @@ git commit -m "feat: plugin manifests and test harness"
 
 ---
 
+
+
 ### Task 2: Le schéma OpenSpec
 
 **Files:**
+
 - Create: `schema/schema.yaml`
 - Create: `schema/templates/proposal.md`, `spec.md`, `design.md`, `adr.md`, `tasks.md`, `verification.md`
 - Create: `schema/README.md`
 - Test: `tests/schema-graph.test.mjs`
 
 **Interfaces:**
+
 - Consumes: rien
 - Produces: le fichier `schema/schema.yaml` avec `name: idd-claude`, et six artefacts d'`id` `proposal`, `specs`, `design`, `adr`, `tasks`, `verification`. La Task 4 copie tout le dossier `schema/` ; la Task 5 valide le résultat avec `openspec validate`.
 
@@ -322,7 +334,7 @@ Partir du `schema.yaml` amont (`openspec/schemas/intent-driven/schema.yaml` du r
       the evaluator subagent.
 ```
 
-3. Laisser le bloc `apply` de l'amont **inchangé** pour l'instant. Les gates durs le remplacent au Plan 2 ; le remplacer ici sortirait du périmètre de cette tâche et rendrait son test non pertinent.
+1. Laisser le bloc `apply` de l'amont **inchangé** pour l'instant. Les gates durs le remplacent au Plan 2 ; le remplacer ici sortirait du périmètre de cette tâche et rendrait son test non pertinent.
 
 Les gabarits `templates/proposal.md`, `spec.md`, `design.md`, `adr.md`, `tasks.md` sont repris tels quels de l'amont. Créer `templates/verification.md` :
 
@@ -374,13 +386,17 @@ git commit -m "feat: idd-claude OpenSpec schema with verification artifact"
 
 ---
 
+
+
 ### Task 3: Détection de version d'OpenSpec
 
 **Files:**
+
 - Create: `scripts/lib/openspec-version.mjs`
 - Test: `tests/openspec-version.test.mjs`
 
 **Interfaces:**
+
 - Consumes: rien
 - Produces: `MINIMUM_OPENSPEC` (chaîne `'1.9.0'`), `parseVersion(output: string) => {major, minor, patch} | null`, `isAtLeast(version: string, minimum: string) => boolean`, `detectOpenspec(run?: () => string) => {installed: boolean, version: string | null, satisfies: boolean}`. La Task 5 appelle `detectOpenspec()`.
 
@@ -501,13 +517,17 @@ git commit -m "feat: detect and compare the installed OpenSpec version"
 
 ---
 
+
+
 ### Task 4: Promotion du schéma
 
 **Files:**
+
 - Create: `scripts/lib/promote-schema.mjs`
 - Test: `tests/promote-schema.test.mjs`
 
 **Interfaces:**
+
 - Consumes: `plugin.json.version` (Task 1), le dossier `schema/` (Task 2)
 - Produces: `SCHEMA_NAME` (chaîne `'idd-claude'`), `defaultConfig() => string`, `promoteSchema({pluginRoot, projectRoot, pluginVersion}) => {schemaPath, configPath, configCreated}`, `promotedVersion(projectRoot) => string | null`, `hasDrifted(projectRoot, pluginVersion) => boolean`. La Task 5 appelle `promoteSchema` et `hasDrifted`.
 
@@ -552,8 +572,10 @@ test('promoteSchema writes a default config when none exists', () => {
   assert.equal(config.schema, SCHEMA_NAME)
   assert.equal(config.verification.spec_as_source, false)
   assert.equal(config.verification.visual, true)
+  assert.equal(config.verification.mutation, false)
   assert.equal(config.verification.floors.runtime, 100)
   assert.equal(config.verification.floors.visual, 100)
+  assert.equal(config.verification.floors.mutation, 70)
   assert.equal(config.verification.max_iterations, 5)
 })
 
@@ -616,12 +638,14 @@ stack: javascript              # javascript | php (v2)
 verification:
   spec_as_source: false        # executable Gherkin - off by default
   visual: true                 # dev-browser gate
+  mutation: false              # mutation testing - off by default
   subagents: true              # one subagent per task
   floors:                      # a dimension below its floor -> RETRY
     spec: 80
     runtime: 100
     visual: 100
     code: 60
+    mutation: 70
     acceptance: 100
   max_iterations: 5
   evaluator_model: sonnet
@@ -675,15 +699,19 @@ git commit -m "feat: promote the schema into a target project with drift stampin
 
 ---
 
+
+
 ### Task 5: Le point d'entrée et la commande /idd:init
 
 **Files:**
+
 - Create: `scripts/promote.mjs`
 - Create: `commands/idd/init.md`
 - Create: `tests/fixtures/js-toy/package.json`
 - Test: `tests/init-end-to-end.test.mjs`
 
 **Interfaces:**
+
 - Consumes: `detectOpenspec` (Task 3), `promoteSchema` / `hasDrifted` / `SCHEMA_NAME` (Task 4), `plugin.json.version` (Task 1)
 - Produces: le binaire `node scripts/promote.mjs <projectRoot>`, qui sort en code 0 en cas de succès et en code 1 avec un message sur stderr si OpenSpec est absent ou trop ancien.
 
@@ -839,7 +867,8 @@ Set up this project for the idd-claude workflow.
 3. Confirm `openspec schemas` lists `idd-claude`, then report:
    - where the schema was installed,
    - whether the config was created or left untouched,
-   - that `verification.spec_as_source` is off by default and how to enable it.
+   - that `verification.spec_as_source` and `verification.mutation` are off by
+     default, and how to enable each.
 
 Never edit files under `openspec/schemas/idd-claude/` in a target project:
 they are a copy, and the next promotion overwrites them.
@@ -862,9 +891,12 @@ git commit -m "feat: /idd:init command and schema promotion entry point"
 
 ---
 
+
+
 ### Task 6: Port des skills et agents amont
 
 **Files:**
+
 - Create: `skills/spec-as-source/`, `skills/gherkin-authoring/`, `skills/acceptance-test-authoring/`, `skills/architectural-decision-records/`, `skills/glossary/`, `skills/grill-me/`, `skills/adversarial-authoring/`, `skills/openspec-git-discipline/`, `skills/c4-diagrams/`
 - Create: `agents/adversarial-author.md`, `agents/adversarial-reviewer.md`
 - Create: `skills-lock.json`
@@ -874,6 +906,7 @@ git commit -m "feat: /idd:init command and schema promotion entry point"
 Les deux agents sont portés dans la même tâche que la skill `adversarial-authoring` : elle les invoque, donc la livrer sans eux produirait une skill cassée.
 
 **Interfaces:**
+
 - Consumes: rien
 - Produces: `parseFrontmatter(source: string) => object | null`, exporté par `scripts/lib/frontmatter.mjs`. Les Plans 2 et 3 ajoutent des skills dans `skills/` et héritent de ce test de conformité.
 
@@ -1051,6 +1084,8 @@ git commit -m "feat: port upstream skills and adversarial agents to the Claude C
 ```
 
 ---
+
+
 
 ## Auto-relecture
 

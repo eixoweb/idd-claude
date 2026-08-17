@@ -133,7 +133,7 @@ Repli documenté : si les sous-agents sont indisponibles, `superpowers:executing
 
 Sous-agent isolé recevant **uniquement** le contrat du groupe, les specs et le diff du groupe — jamais la conversation d'implémentation.
 
-Enchaînement : `requesting-code-review` d'abord — sur un finding CRITICAL ou HIGH il retourne `BLOCK` sans noter ; sinon suite de tests, puis check visuel, puis notation.
+Enchaînement : `requesting-code-review` d'abord — sur un finding CRITICAL ou HIGH il retourne `BLOCK` sans noter ; sinon suite de tests, puis check visuel, puis mutation testing si activé, puis notation.
 
 L'évaluateur **rejoue lui-même** les assertions déclarées dans les tâches `VISUAL` du groupe : il ne lit pas le résultat annoncé par la session d'implémentation. C'est cohérent avec son rôle de vérificateur externe sceptique — il ne prend rien pour argent comptant, y compris une case cochée.
 
@@ -146,7 +146,25 @@ Les dimensions notées sont activées dynamiquement par la configuration ; une d
 - **L'effet de compensation.** Une moyenne autorise une dimension faible à être rachetée par les autres. Un groupe à spec 90 / runtime 100 / visual 60 / code 85 obtient 86 et passerait — alors que 4 assertions visuelles sur 10 échouent, donc que le rendu est faux. C'est exactement le faux positif que ce projet existe pour éviter.
 - **La calibration est invérifiable.** Des poids et un seuil ont l'air rigoureux mais ne reposent sur rien ; un total de 86 n'a pas de signification absolue.
 
-Les planchers, eux, expriment des règles vérifiables. `runtime: 100` dit « aucun test en échec ne passe le gate » — une propriété binaire, sur laquelle une pondération n'aurait aucun sens. Idem pour le visuel : une assertion mesurée qui casse est un fait, pas une note. Seules `spec` et `code` gardent un plancher gradué, parce qu'elles reposent sur une appréciation du modèle et non sur une exécution.
+Les planchers, eux, expriment des règles vérifiables. `runtime: 100` dit « aucun test en échec ne passe le gate » — une propriété binaire, sur laquelle une pondération n'aurait aucun sens. Idem pour le visuel : une assertion mesurée qui casse est un fait, pas une note. Seules `spec`, `code` et `mutation` gardent un plancher gradué.
+
+### Mutation testing
+
+Dimension **optionnelle, désactivée par défaut** (`verification.mutation: false`), au même titre que `spec_as_source`.
+
+**Pourquoi elle appartient à ce projet.** Le plancher `runtime: 100` garantit qu'aucun test n'échoue — mais une suite verte peut ne rien valoir, surtout écrite par un agent : un test qui n'assert rien de significatif passe, un test écrit après le code pour épouser son comportement passe. La discipline TDD de Superpowers réduit ce risque (voir le test échouer pour la bonne raison) sans que rien ne le **vérifie**. Le mutation testing est la seule mesure automatique répondant à « cette suite attraperait-elle une régression » : on injecte des mutants dans le code — `>` devient `>=`, un retour devient `null`, une instruction disparaît — et on relance la suite ; un mutant qui survit désigne un comportement non réellement couvert.
+
+Le TDD est le processus, le score de mutation en est la preuve.
+
+**Outillage** : Stryker Mutator pour le pack JS, Infection pour le pack PHP de la v2.
+
+**Maîtrise du coût.** Un run complet relance la suite une fois par mutant, ce qui est prohibitif dans un gate par groupe. L'évaluateur ne mute donc que les fichiers touchés par le groupe, via `--since <ref>`, avec `--incremental` pour réutiliser les résultats précédents.
+
+**Critère retenu** : le score de mutation sur les fichiers modifiés, comparé au plancher (70 par défaut). Écarté : la variante stricte « aucun survivant sur les lignes ajoutées », plus juste — elle ne juge que le travail du groupe et non la dette antérieure — mais qui exige de croiser le rapport JSON de Stryker avec les hunks du diff. Reportée en hors périmètre.
+
+**Pourquoi 70 et pas 100.** Les **mutants équivalents** — sémantiquement identiques à l'original, donc impossibles à tuer — sont des faux positifs permanents qu'aucun outil ne détecte automatiquement. Exiger 100 rendrait le gate infranchissable et pousserait à écrire des tests absurdes pour tuer l'intuable. Le résidu est toléré, et les cas connus se marquent explicitement (`// Stryker disable`).
+
+Pas de type de tâche `MUTATE` : c'est une vérification, pas une étape d'implémentation. Elle appartient à l'évaluateur, comme le lancement des tests.
 
 ### Gate visuel
 
@@ -181,12 +199,14 @@ stack: javascript              # javascript | php (v2)
 verification:
   spec_as_source: false        # Gherkin exécutable — OFF par défaut
   visual: true                 # gate dev-browser
+  mutation: false              # mutation testing — OFF par défaut
   subagents: true              # un sous-agent par tâche
   floors:                      # une dimension sous son plancher → RETRY
     spec: 80                   # gradué : appréciation du modèle
     runtime: 100               # binaire : aucun test en échec
     visual: 100                # binaire : aucune assertion mesurée en échec
     code: 60                   # gradué : tolérance sur le MEDIUM/LOW résiduel
+    mutation: 70               # gradué — ignoré si mutation: false
     acceptance: 100            # binaire — ignoré si spec_as_source: false
   max_iterations: 5
   evaluator_model: sonnet
@@ -229,6 +249,7 @@ Principe directeur : **un `PASS` obtenu en sautant une dimension est pire qu'un 
 | Migration vers les *stores* OpenSpec | sortie de beta |
 | Diff de screenshots contre baseline | si les assertions mesurées se révèlent insuffisantes |
 | Extraction automatique des valeurs attendues depuis Figma | si la saisie manuelle devient le goulot |
+| Mutation stricte « aucun survivant sur les lignes ajoutées » | si le score par fichier pénalise trop souvent une dette antérieure |
 
 ## Risques connus
 
@@ -237,5 +258,9 @@ Principe directeur : **un `PASS` obtenu en sautant une dimension est pire qu'un 
 **Worktree contre gate visuel.** La vérification visuelle exige que le serveur de dev serve *le worktree*, pas le répertoire principal. Trivial en JS (Vite se lance depuis n'importe quel répertoire), impossible tel quel avec DDEV qui sert un docroot unique. Contrainte à traiter en même temps que le pack PHP : soit désactiver les worktrees, soit prévoir un montage dédié.
 
 **Dérive de version du schéma.** Le modèle « plugin porteur + promotion » impose de re-promouvoir le schéma dans chaque projet après chaque mise à jour du plugin. Atténué par l'avertissement de dérive, supprimé le jour où les *stores* sortent de beta.
+
+**Le runner de tests d'idd-claude n'est pas mutable en l'état.** Ce repo teste avec `node --test`, que Stryker ne pilote pas nativement (il supporte jest, vitest, mocha, jasmine, cucumber). Appliquer la dimension `mutation` au projet lui-même imposerait soit de basculer ses tests sur vitest, soit de passer par le `command-runner` générique de Stryker — plus lent et moins granulaire. À trancher au Plan 2 ; sans incidence sur les projets consommateurs, qui utilisent leur propre runner.
+
+**Coût du mutation testing.** Même scopé au diff par `--since`, un run reste bien plus lent qu'une suite de tests. C'est la raison de le laisser désactivé par défaut plutôt que de le subir sur chaque groupe de chaque projet.
 
 **Suivi de l'amont.** Le fork dur assume de ne pas rejouer les améliorations d'intent-driven-template. La divergence est massive dès le départ (gates durs, évaluateur, gate visuel), ce qui rend un merge amont illusoire de toute façon.
