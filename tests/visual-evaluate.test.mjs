@@ -1,6 +1,11 @@
 import { test } from 'vitest'
 import assert from 'node:assert/strict'
-import { evaluateVisual, buildProbeScript, parseVisualSpec } from '../scripts/lib/visual.mjs'
+import {
+  evaluateVisual,
+  evaluateVisualBatch,
+  buildProbeScript,
+  parseVisualSpec,
+} from '../scripts/lib/visual.mjs'
 
 const style = (over = {}) => ({
   kind: 'style',
@@ -61,7 +66,7 @@ test('the score is the proportion of assertions that hold', () => {
 
 test('the probe script targets the declared url and viewport', () => {
   const spec = parseVisualSpec(['url: /contact', 'viewport: 768', 'count .x  1'])
-  const script = buildProbeScript(spec, 'https://example.test')
+  const script = buildProbeScript([spec], 'https://example.test')
   assert.match(script, /https:\/\/example\.test\/contact/)
   assert.match(script, /768/)
   assert.match(script, /getComputedStyle|querySelectorAll/)
@@ -119,8 +124,8 @@ test('each assertion kind produces its own probe, in the declared order', () => 
     'count  .first   2',
     'assert .second  color  red',
   ])
-  const script = buildProbeScript(spec, 'https://example.test')
-  const probes = JSON.parse(script.match(/const probes = (\[.*?\]);/s)[1])
+  const script = buildProbeScript([spec], 'https://example.test')
+  const [{ probes }] = JSON.parse(script.match(/const tasks = (\[.*?\]);/s)[1])
 
   assert.deepEqual(probes, [
     { kind: 'count', selector: '.first' },
@@ -130,12 +135,52 @@ test('each assertion kind produces its own probe, in the declared order', () => 
 
 test('a count probe carries no property and a style probe does', () => {
   const spec = parseVisualSpec(['url: /', 'count .a  1'])
-  const [probe] = JSON.parse(buildProbeScript(spec, 'https://x.test').match(/const probes = (\[.*?\]);/s)[1])
+  const script = buildProbeScript([spec], 'https://x.test')
+  const [{ probes: [probe] }] = JSON.parse(script.match(/const tasks = (\[.*?\]);/s)[1])
   assert.equal(probe.property, undefined, 'a count has no property to read')
 })
 
 test('the probe resolves the url against the base rather than concatenating', () => {
   const spec = parseVisualSpec(['url: /deep/page', 'count .a  1'])
-  const script = buildProbeScript(spec, 'https://example.test/ignored')
+  const script = buildProbeScript([spec], 'https://example.test/ignored')
   assert.match(script, /"https:\/\/example\.test\/deep\/page"/)
+})
+
+// ---- One call for the whole group ----
+
+const spec = (url, count) => ({ ...parseVisualSpec([`url: ${url}`, `count .a  ${count}`]), ordinal: url })
+
+test('every VISUAL task of a group is probed by one script, in order', () => {
+  // Four tool round trips became one. The browser time was never the cost:
+  // 4 sequential calls measured 2990ms, the same 4 batched 2224ms — while each
+  // round trip costs the model tens of seconds to compose and read.
+  const script = buildProbeScript([spec('/a', 1), spec('/b', 2)], 'https://x.test')
+  const tasks = JSON.parse(script.match(/const tasks = (\[.*?\]);/s)[1])
+  assert.equal(tasks.length, 2)
+  assert.deepEqual(
+    tasks.map((t) => t.url),
+    ['https://x.test/a', 'https://x.test/b'],
+  )
+})
+
+test('the batch scores each task and reports the mean', () => {
+  const r = evaluateVisualBatch([spec('/a', 1), spec('/b', 2)], [[1], [5]])
+  assert.deepEqual(
+    r.tasks.map((t) => [t.ordinal, t.score]),
+    [['/a', 100], ['/b', 0]],
+  )
+  assert.equal(r.score, 50)
+})
+
+test('a task keeps its own failures, so a report can name the one that broke', () => {
+  const r = evaluateVisualBatch([spec('/a', 1), spec('/b', 2)], [[1], [5]])
+  assert.deepEqual(r.tasks[0].failures, [])
+  assert.equal(r.tasks[1].failures.length, 1)
+  assert.match(r.tasks[1].failures[0].message, /expected 2, got 5/)
+})
+
+test('a missing measurement is loud, never a silent zero', () => {
+  // A dimension that is enabled but unevaluable stops the run rather than
+  // quietly scoring 0 — an infrastructure fault is not a failing implementation.
+  assert.throws(() => evaluateVisualBatch([spec('/a', 1), spec('/b', 2)], [[1]]), /measure/i)
 })

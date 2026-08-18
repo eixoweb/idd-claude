@@ -104,24 +104,55 @@ export function evaluateVisual(assertions, measured) {
   return { score: Math.round((100 * passed) / assertions.length), failures }
 }
 
-export function buildProbeScript(spec, baseUrl) {
-  const target = new URL(spec.url, baseUrl).toString()
-  const probes = spec.assertions.map((a) =>
-    a.kind === 'count'
-      ? { kind: 'count', selector: a.selector }
-      : { kind: 'style', selector: a.selector, property: a.property },
-  )
+export function buildProbeScript(specs, baseUrl) {
+  const tasks = specs.map((spec) => ({
+    ordinal: spec.ordinal ?? null,
+    url: new URL(spec.url, baseUrl).toString(),
+    viewport: spec.viewport,
+    probes: spec.assertions.map((a) =>
+      a.kind === 'count'
+        ? { kind: 'count', selector: a.selector }
+        : { kind: 'style', selector: a.selector, property: a.property },
+    ),
+  }))
 
+  // One script for the whole group. The browser time was never the cost — four
+  // sequential probes measured 2990ms against 2224ms batched — but each probe
+  // was a separate tool call the model had to compose, wait on and read back.
   return `const page = await browser.getPage("idd-visual");
-await page.setViewportSize({ width: ${spec.viewport}, height: 900 });
-await page.goto(${JSON.stringify(target)}, { waitUntil: "networkidle" });
-const probes = ${JSON.stringify(probes)};
-const measured = await page.evaluate((probes) => probes.map((probe) => {
-  if (probe.kind === "count") return document.querySelectorAll(probe.selector).length;
-  const el = document.querySelector(probe.selector);
-  if (!el) return null;
-  return getComputedStyle(el).getPropertyValue(probe.property).trim();
-}), probes);
-console.log(JSON.stringify({ url: ${JSON.stringify(target)}, measured }));
+const tasks = ${JSON.stringify(tasks)};
+const measuredByTask = [];
+for (const task of tasks) {
+  await page.setViewportSize({ width: task.viewport, height: 900 });
+  await page.goto(task.url, { waitUntil: "networkidle" });
+  measuredByTask.push(await page.evaluate((probes) => probes.map((probe) => {
+    if (probe.kind === "count") return document.querySelectorAll(probe.selector).length;
+    const el = document.querySelector(probe.selector);
+    if (!el) return null;
+    return getComputedStyle(el).getPropertyValue(probe.property).trim();
+  }), task.probes));
+}
+console.log(JSON.stringify({ measuredByTask }));
 `
+}
+
+/**
+ * Per-task scores plus the group's mean. A task keeps its own failures so a
+ * report can name the one that broke rather than a single blended number.
+ */
+export function evaluateVisualBatch(specs, measuredByTask) {
+  const tasks = specs.map((spec, i) => {
+    const measured = measuredByTask?.[i]
+    // Loud rather than a silent 0: an unmeasured assertion is infrastructure
+    // failing, and scoring it as a failing implementation would be a lie.
+    if (!Array.isArray(measured)) {
+      throw new Error(`no measurement came back for task ${spec.ordinal ?? i + 1}`)
+    }
+    return { ordinal: spec.ordinal ?? null, ...evaluateVisual(spec.assertions, measured) }
+  })
+
+  return {
+    score: Math.round(tasks.reduce((sum, t) => sum + t.score, 0) / tasks.length),
+    tasks,
+  }
 }

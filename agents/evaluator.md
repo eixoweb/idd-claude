@@ -55,13 +55,16 @@ makes a dispatch slow.
    **re-run** its assertions yourself — never read the result the
    implementation session claimed. For each task, pass its assertion lines to:
 
-   `node "${CLAUDE_PLUGIN_ROOT}/scripts/visual-cli.mjs" '<lines as JSON array>' <devStackUrl>`
+   `node "${CLAUDE_PLUGIN_ROOT}/scripts/visual-cli.mjs" '<the group's visual array>' <devStackUrl>`
+
+   **One call for the whole group**, not one per task: pass the group's `visual`
+   array from the payload through verbatim. It returns a per-task score, each
+   task's own failures, and the mean to use as the dimension's score.
 
    `devStackUrl` is in the dispatch. It is not yours to guess: an assertion
    measured against the wrong origin is worse than one not measured at all.
 
-   The dimension's score is the mean of the per-task scores. If any invocation
-   returns `"UNKNOWN"`, report `"UNKNOWN"` for the whole dimension — not 0. A
+   The dimension's score is the `score` it returns. If it returns `"UNKNOWN"`, report `"UNKNOWN"` for the whole dimension — not 0. A
    broken environment is not a broken implementation.
 
 6. **Score `mutation`** if the dimension is enabled. Run:
