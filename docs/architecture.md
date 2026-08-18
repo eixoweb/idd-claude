@@ -16,7 +16,7 @@ idd-claude/
 ├── scripts/
 │   ├── lib/                 all the logic, unit-tested
 │   └── *-cli.mjs            thin shells that spawn external tools
-├── tests/                   18 files, 171 tests
+├── tests/                   20 files, 183 tests
 └── docs/superpowers/        design specs and implementation plans (French)
 ```
 
@@ -106,6 +106,10 @@ hand-copied. If you change a shared artifact instruction, change it in
 
 `tests/schema-graph.test.mjs` and `tests/schema-lite-graph.test.mjs` lock both
 dependency graphs, so a malformed edit fails before OpenSpec ever sees it.
+`tests/schema-parity.test.mjs` locks the relationship between them: the three
+shared instructions byte-identical, every shared template byte-identical, and
+the lite proposal equal to the full one **plus** its bounded guard. "Must not
+drift" was a rule in this file and nothing else until then.
 
 ## Schema promotion and drift
 
@@ -142,7 +146,7 @@ happened for one reason: Stryker drives vitest natively and cannot drive
 `node --test`.
 
 ```bash
-npm test                          # 171 tests, ~2s
+npm test                          # 183 tests, ~2s
 ./node_modules/.bin/stryker run   # mutation score, ~20s
 ```
 

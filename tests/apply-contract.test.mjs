@@ -26,6 +26,15 @@ test('apply wires the multi-agent layer', () => {
   assert.match(apply, /superpowers:verification-before-completion/)
 })
 
+test('apply hands the evaluator its inputs rather than sending it looking', () => {
+  // The evaluator's charter says it receives only the contract, specs and
+  // diff. The dispatch has to make that true; asserting it is not enough — and
+  // an evaluator that fetches its own inputs spends most of its turns on it.
+  assert.match(apply, /Gather its inputs and pass them in the dispatch/)
+  assert.match(apply, /Do not tell it to go and\s+find them/)
+  assert.match(apply, /verification\.evaluator_model/)
+})
+
 test('apply forbids calling the code review directly', () => {
   assert.match(apply, /NEVER invoke `superpowers:requesting-code-review` directly/)
 })

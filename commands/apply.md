@@ -79,8 +79,26 @@ twice.
 
 ## End of each group
 
-Dispatch the `evaluator` agent. Pass it only the group's contract, the
-change's specs, and the group's diff — never this conversation.
+Dispatch the `evaluator` agent **with the model named in
+`verification.evaluator_model`** (default `sonnet`).
+
+**Gather its inputs and pass them in the dispatch. Do not tell it to go and
+find them.** Its charter is that it receives only the contract, the specs and
+the diff and does not go looking — a charter the dispatch has to make true, not
+merely assert. Handing them over is also what keeps the dispatch short: an
+evaluator that has to locate its own inputs spends most of its turns doing it.
+
+Collect, before dispatching:
+
+- the group's heading and its tasks, from `tasks.md`;
+- the assertion lines of each `VISUAL` task in the group, as a JSON array per
+  task, ready to pass to `visual-cli.mjs`;
+- the change's spec files, in full;
+- `git diff <group base>..HEAD`, and the list of changed files as a JSON array;
+- the base ref and the dev stack base URL.
+
+Pass all of it in the prompt. Give it the paths it must *run* — the CLIs — not
+the paths it must *read*.
 
 - `PASS` → next group.
 - `RETRY` → append the fix tasks it generated to `tasks.md` and work them, then
