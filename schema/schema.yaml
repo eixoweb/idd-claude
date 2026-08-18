@@ -273,32 +273,33 @@ artifacts:
     generates: tasks.md
     description: Implementation checklist with trackable tasks
     template: tasks.md
-    instruction: >
+    instruction: |
       Create the task list that breaks down the implementation work.
 
+      **IMPORTANT: Follow the template below exactly.** The apply phase parses checkbox format to track progress. Tasks not using `- [ ]` won't be tracked.
 
-      **IMPORTANT: Follow the template below exactly.** The apply phase parses
-      checkbox format to track progress. Tasks not using `- [ ]` won't be
-      tracked.
+      **Every task carries a keyword after its ordinal**, before the description: `- [ ] 1.2 GREEN — implement requestToken`. `/idd:apply` dispatches on that keyword and on nothing else, so a task without one is a task it does not know how to run.
 
+      | Keyword | Use it for |
+      | --- | --- |
+      | `RED` | the failing test, written first, with the failure mode named in the description |
+      | `GREEN` | the minimal code that makes the preceding RED pass |
+      | `REFACTOR` | cleanup at constant behaviour — its diff must touch no test assertion |
+      | `VISUAL` | measured dev-browser assertions against a rendered page |
+      | `ACCEPT` | one Gherkin scenario — only when `spec_as_source` is on |
+
+      **Every GREEN is preceded by its RED, in the same group.** Writing the code first and its test after is the inversion this workflow exists to prevent: a test written against code that already passes agrees with whatever that code happens to do. One behaviour at a time, RED then GREEN.
+
+      A `VISUAL` task declares its assertions on indented lines beneath it — a `url:`, an optional `viewport:`, then `assert` and `count` lines. Separators are two or more spaces. Prose is not an assertion: write `count .grid > *  12`, never "12 columns". A `VISUAL` task with no assertion is rejected.
 
       Guidelines:
-
       - Group related tasks under ## numbered headings.
-
-      - Each task MUST be a checkbox: `- [ ] X.Y Task description`.
-
+      - Each task MUST be a checkbox: `- [ ] X.Y KEYWORD - Task description`.
       - Tasks should be small enough to complete in one session.
-
       - Order tasks by dependency (what must be done first?).
+      - If implementation changes behaviour specs, include a task to run `openspec validate <change> --type change --strict` before archive.
 
-      - If implementation changes behaviour specs, include a task to run
-      `openspec validate <change> --type change --strict` before archive.
-
-
-      Reference specs for what to build, design for how to build it, and
-      <repo>/adr/ for durable architectural commitments to honor.
-
+      Reference specs for what to build, design for how to build it, and <repo>/adr/ for durable architectural commitments to honor.
       Each task should be verifiable - you know when it's done.
     requires:
       - specs

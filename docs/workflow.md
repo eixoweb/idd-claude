@@ -102,8 +102,11 @@ Three layers, deliberately redundant:
 
 1. `superpowers:test-driven-development` is invoked at session start and holds
    "no GREEN without a preceding RED" throughout.
-2. The tasks template generates RED/GREEN pairs before a line of code exists,
-   so the order is written into the artifact.
+2. The tasks **instruction and template** mandate a keyword after every ordinal
+   and RED before its GREEN, so the order is written into the artifact instead
+   of hoped for at apply time. Until 0.17.0 this line was a claim with nothing
+   behind it: the instruction was still upstream's, and a real run produced
+   twelve tasks of which ten carried no keyword at all.
 3. `refactor-guard-cli.mjs` blocks the handoff if a `REFACTOR` task removed a
    test assertion — deterministically, before anything is judged.
 
