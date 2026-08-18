@@ -38,19 +38,27 @@ function globToRegExp(glob) {
 }
 
 /**
- * - Source files changed -> mutate exactly those.
- * - Only tests changed -> full run. Scoping would leave nothing to mutate,
- *   which is precisely the change where the score is the deliverable.
+ * - Any test file changed -> full run. Which modules a test covers is not
+ *   derivable from its path, so scoping risks skipping the very module the
+ *   change set out to strengthen. Measuring more slowly beats measuring the
+ *   wrong thing cheaply — the same reasoning that makes an unevaluable
+ *   dimension BLOCK rather than score zero.
+ * - Only source files changed -> mutate exactly those.
  * - Neither -> nothing to measure.
+ *
+ * The cost is real: in a TDD project almost every diff touches tests, so
+ * almost every run is full. Scoping earns its keep on refactors and on fix
+ * tasks that touch no test.
  */
 export function chooseMutationScope(changedFiles, mutateGlobs) {
   const matchers = mutateGlobs.map(globToRegExp)
   const files = (changedFiles ?? []).map(String)
 
+  const touchesTests = files.some((file) => TEST_FILE.test(file))
   const mutate = files.filter((file) => matchers.some((re) => re.test(file)))
-  if (mutate.length > 0) return { mode: 'scoped', mutate }
 
-  if (files.some((file) => TEST_FILE.test(file))) return { mode: 'full', mutate: [] }
+  if (touchesTests) return { mode: 'full', mutate: [] }
+  if (mutate.length > 0) return { mode: 'scoped', mutate }
 
   return { mode: 'none', mutate: [] }
 }

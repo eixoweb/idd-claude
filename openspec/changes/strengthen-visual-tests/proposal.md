@@ -13,13 +13,26 @@ that weakness to sit.
 - Tests pinning the content of failure messages.
 - Tests pinning the probe built for each assertion kind.
 
-No production code changes: the behaviour is already correct. What is missing
-is anything that would notice if it stopped being.
+The visual-assertion behaviour itself is already correct; what is missing is
+anything that would notice if it stopped being.
+
+**Bundled fix, discovered while running this change.** The mutation dimension
+could not report a score at all: `mutation-cli.mjs` passed Stryker a `--since`
+flag that does not exist, so every scoped run returned UNKNOWN. Since this
+change's own acceptance criterion is a mutation score, the fix could not be
+deferred. It carries a second correction: scoping is now decided by whether the
+diff touches tests, because a changed test's coverage is not derivable from its
+path, and the earlier rule silently skipped the module a change set out to
+measure.
 
 ## Capabilities
 
 - visual-assertions
+- mutation-scoping
 
 ## Impact
 
-`tests/visual-parse.test.mjs` and `tests/visual-evaluate.test.mjs` only.
+- `tests/visual-parse.test.mjs`, `tests/visual-evaluate.test.mjs` — the tests
+  this change exists to add.
+- `scripts/lib/mutation.mjs`, `scripts/mutation-cli.mjs`,
+  `tests/mutation.test.mjs` — the bundled fix.
