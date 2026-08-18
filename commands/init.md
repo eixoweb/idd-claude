@@ -1,5 +1,5 @@
 ---
-name: "IDD: Init"
+name: init
 description: "Install the idd-claude OpenSpec schema into this project and write its config"
 ---
 

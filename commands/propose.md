@@ -1,5 +1,5 @@
 ---
-name: "IDD: Propose"
+name: propose
 description: "Open an OpenSpec change at the right tier and generate its artifacts"
 ---
 

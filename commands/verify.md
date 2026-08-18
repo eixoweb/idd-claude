@@ -1,5 +1,5 @@
 ---
-name: "IDD: Verify"
+name: verify
 description: "Check that the implementation is complete and its verification is green"
 ---
 
