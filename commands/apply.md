@@ -123,6 +123,22 @@ no business re-reading the proposal it measures against, and carrying it
 inflates the payload while diluting the review. The artifact files are listed
 separately in the payload if you need to mention them.
 
+**Run the automatic rule before dispatching anything:**
+
+```
+node "${CLAUDE_PLUGIN_ROOT}/scripts/refactor-guard-cli.mjs" <the card's payload path>
+```
+
+A REFACTOR task whose diff removes a test assertion is CRITICAL by design. No
+judgement is involved, so it does not need a round trip to reach one: on the run
+that motivated this, the evaluator spent two and a half minutes returning a
+verdict a millisecond of script returns. On a non-zero exit, treat it exactly as
+a `BLOCK` — record the round, work the findings, re-run the guard — and dispatch
+only once it is clean.
+
+It is a guard, not a replacement: it recognises tests by convention, so the
+evaluator still applies the same rule to what the convention misses.
+
 **Dispatch the card's `payload` path — never the payload itself.** Transcribing
 that JSON into the Task prompt is thousands of output tokens spent before the
 evaluator has started, and it grows with the diff: the bigger the change, the

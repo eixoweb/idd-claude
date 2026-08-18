@@ -127,3 +127,10 @@ test('the evaluator is handed a path, not a pasted payload', () => {
   assert.match(applyFlat, /payload/i)
   assert.doesNotMatch(applyFlat, /paste that payload into the dispatch/i)
 })
+
+test('the automatic REFACTOR rule is enforced by a script, before the dispatch', () => {
+  // 148s of evaluator time to reach a verdict the design calls automatic. A
+  // rule that costs a round trip is not automatic, it is a judgement.
+  assert.match(apply, /refactor-guard-cli\.mjs/)
+  assert.match(applyFlat, /before dispatching/i)
+})
