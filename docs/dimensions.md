@@ -117,6 +117,24 @@ The extensions are the usual template and style ones — `.html`, `.css`,
 `.scss`, `.vue`, `.jsx`, `.tsx`, `.svelte`, `.twig`, `.erb`, `.blade.php` —
 and are overridable.
 
+## What is still only a prompt instruction
+
+The verdict, applicability and the coverage warning are all computed by code.
+Two things are not, and it is worth knowing which:
+
+**The iteration cap.** `max_iterations` is read from the config but no code
+enforces it — the RETRY loop lives in `/idd:apply`'s prompt, and the cap is an
+instruction to the agent running it. Making it deterministic would need an
+orchestrator holding state across turns, which this plugin is not. Until then,
+a runaway loop is caught by the human watching it.
+
+**Whether the evaluator actually followed its sequence.** Its prompt tells it
+to review before scoring, to re-run visual assertions rather than trust them,
+and to call `verdict-cli`. Structural tests assert those instructions are
+present in the file; nothing verifies an agent obeyed them on a given run. The
+trial observed correct behaviour across three dispatches — that is evidence,
+not a guarantee.
+
 ## The verdict is computed outside the model
 
 The evaluator produces scores. It does **not** decide the verdict — it calls:
