@@ -79,7 +79,9 @@ test('every dimension has a declared floor', () => {
 test('operational settings come through with defaults', () => {
   const settings = readVerification('verification: {}')
   assert.equal(settings.maxIterations, 5)
-  assert.equal(settings.evaluatorModel, 'sonnet')
+  // No default here any more: the model follows the tier, which only the
+  // preflight knows. Absent means "not configured", not "sonnet".
+  assert.equal(settings.evaluatorModel, null)
 })
 
 test('execution shape is not a project setting', () => {

@@ -96,12 +96,18 @@ and reports to the user. `BLOCK` verdicts do not count toward it.
 
 ### `evaluator_model`
 
-`haiku`, `sonnet` (default) or `opus`. Read by `/idd:apply` and passed to the
-evaluator at dispatch, overriding the model in the agent's own frontmatter.
+`haiku`, `sonnet` or `opus`. Read by the preflight and passed to the evaluator
+at dispatch, overriding the model in the agent's own frontmatter.
 
-Sonnet is the default deliberately: economising on the step that exists to be a
-safeguard is the wrong trade. Raise it to `opus` on a codebase where a missed
-finding is expensive.
+**Left unset, it follows the tier**: `haiku` on a bounded change, `sonnet` on an
+architectural one. Economising on a safeguard is the wrong trade in general —
+but the tier is exactly the signal for how much the safeguard is worth. A
+bounded change is one unit of work reviewed in a single pass; measured, an
+architectural-grade evaluator spent 8.3 minutes guarding 8.7 minutes of
+implementation, which is the failure this design names out loud.
+
+Set it explicitly to override, on either tier. Raise it to `opus` on a codebase
+where a missed finding is expensive.
 
 ## `project`
 

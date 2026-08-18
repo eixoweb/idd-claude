@@ -41,7 +41,9 @@ export function readVerification(configSource) {
     enabled,
     floors,
     maxIterations: v.max_iterations ?? 5,
-    evaluatorModel: v.evaluator_model ?? 'sonnet',
+    // No default here: the right model depends on the tier, which only the
+    // preflight knows. null means "not configured", not "sonnet".
+    evaluatorModel: v.evaluator_model ?? null,
   }
 }
 

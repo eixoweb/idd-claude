@@ -117,3 +117,16 @@ test('the plugin name is the command namespace the docs promise', () => {
   )
   assert.ok(market.plugins.some((p) => p.name === 'idd'))
 })
+
+test('propose runs the intent artifacts through the adversarial council', () => {
+  // The "work no requirement governs" finding reproduced identically across two
+  // runs and cost a 328s BLOCK round each time. It is a defect of the spec,
+  // catchable on a 433-byte proposal before a line of code exists — which is
+  // where the upstream template puts its adversarial pass.
+  const propose = read('propose.md')
+  assert.match(propose, /adversarial-authoring/)
+  assert.match(propose, /proposal/i)
+  assert.match(propose, /SHALL/)
+  // Not on every artifact: tasks.md is mechanical and the council is not free.
+  assert.match(propose.replace(/\s+/g, ' '), /not (on )?every artifact|tasks\.md is mechanical/i)
+})

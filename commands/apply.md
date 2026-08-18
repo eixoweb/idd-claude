@@ -99,10 +99,10 @@ verdict for an independent group buys nothing and doubles the wall clock.
 
 ## Dispatching the evaluator
 
-Use the model named in `verification.evaluator_model` (default `sonnet`), and
-tell it the tier so it can calibrate its own depth: on a small diff it should
-judge the code directly rather than invoke the full `requesting-code-review`
-skill, which costs more than it finds on twenty lines.
+Use the model the preflight returned as `evaluatorModel` — it resolves
+`verification.evaluator_model` when set, and otherwise follows the tier, because
+the tier is what says how much the gate is worth. Tell the evaluator its tier:
+the payload decides its review depth from it.
 
 **Gather its inputs with one command, and hand over the path it prints.**
 
@@ -152,7 +152,19 @@ it the paths it must *run* — the CLIs — and the one path it must *read*.
 
 Then act on the verdict:
 
-- `PASS` → done, or next group.
+**On a bounded change, there is no loop.** Record the round, then:
+
+- `PASS` → done.
+- `RETRY` or `BLOCK` → **stop and report**: the findings, the fix tasks the
+  evaluator generated, and what it scored. **Do not re-dispatch**, and do not
+  work the fixes unattended. One unit of work is settled faster by a human
+  reading two findings than by a second dispatch costing minutes, and the
+  judgement of whether a finding is worth acting on is theirs.
+
+On an architectural change, the loop stands — the work is large enough that
+serialising a human into every round costs more than the round does:
+
+- `PASS` → next group.
 - `RETRY` → append the fix tasks it generated to `tasks.md` and work them, then
   re-dispatch **incrementally**. Stop at `verification.max_iterations` and
   report to the user.

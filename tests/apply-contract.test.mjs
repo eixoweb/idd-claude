@@ -143,3 +143,15 @@ test('the end of a change carries the verdict forward instead of re-measuring it
   assert.match(apply, /payload's `head`|`head`/)
   assert.match(applyFlat, /':!openspec\/'/)
 })
+
+test('the evaluator model comes from the preflight, which is what knows the tier', () => {
+  assert.match(apply, /`evaluatorModel`/)
+})
+
+test('a bounded change reports its verdict instead of looping on it', () => {
+  // One unit of work: a human reading two findings settles it faster than a
+  // 328-second re-dispatch, and keeps the judgement where it belongs.
+  assert.match(applyFlat, /bounded/i)
+  assert.match(applyFlat, /do not re-dispatch/i)
+  assert.match(applyFlat, /stop and report/i)
+})
