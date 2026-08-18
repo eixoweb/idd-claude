@@ -1,6 +1,6 @@
 import { test } from 'vitest'
 import assert from 'node:assert/strict'
-import { ALL_DIMENSIONS, readVerification } from '../scripts/lib/config.mjs'
+import { ALL_DIMENSIONS, readProject, readVerification } from '../scripts/lib/config.mjs'
 
 const base = `
 schema: idd-claude
@@ -97,4 +97,22 @@ test('the config carries only project facts and policy', () => {
     Object.keys(settings).sort(),
     ['enabled', 'evaluatorModel', 'floors', 'maxIterations'],
   )
+})
+
+test('the project facts are read in one place, not parsed again per caller', () => {
+  // The preflight and the evaluator dispatch both need the dev stack URL. Two
+  // readers of the same key is how they drift apart.
+  const project = readProject(
+    'project:\n  dev_stack_command: "pnpm dev"\n  dev_stack_url: "http://localhost:5173"\n  test_commands: ["pnpm test"]\n',
+  )
+  assert.equal(project.devStackCommand, 'pnpm dev')
+  assert.equal(project.devStackUrl, 'http://localhost:5173')
+  assert.deepEqual(project.testCommands, ['pnpm test'])
+})
+
+test('a missing project block reads as empty, not as a crash', () => {
+  const project = readProject('verification: {}\n')
+  assert.equal(project.devStackCommand, null)
+  assert.equal(project.devStackUrl, null)
+  assert.deepEqual(project.testCommands, [])
 })

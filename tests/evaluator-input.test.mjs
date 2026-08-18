@@ -1,6 +1,11 @@
 import { test } from 'vitest'
 import assert from 'node:assert/strict'
-import { splitDiffFiles, visualAssertionsFor, selectGroups } from '../scripts/lib/evaluator-input.mjs'
+import {
+  splitDiffFiles,
+  visualAssertionsFor,
+  selectGroups,
+  dispatchCard,
+} from '../scripts/lib/evaluator-input.mjs'
 import { parseTasks } from '../scripts/lib/tasks.mjs'
 
 const TASKS = `## 1. First
@@ -73,4 +78,35 @@ test('an architectural tier without a group number is an error, not a guess', ()
 test('a group number that does not exist is an error', () => {
   const groups = parseTasks(TASKS)
   assert.throws(() => selectGroups(groups, 'architectural', 9), /group 9/)
+})
+
+const PAYLOAD = {
+  changeId: 'c',
+  tier: 'bounded',
+  base: 'abc123^',
+  devStackUrl: 'http://localhost:8123',
+  groups: [{ number: 1, title: 'First', tasks: [{}, {}, {}], visual: [{}, {}] }],
+  specs: [{ path: 'specs/a.md', content: 'x'.repeat(5000) }],
+  changedFiles: ['src/a.js', 'src/b.js'],
+  diff: 'y'.repeat(40000),
+}
+
+test('the dispatch card names the payload instead of carrying it', () => {
+  // The main agent used to re-emit the whole payload into the Task prompt —
+  // thousands of output tokens spent transcribing JSON, growing with the diff.
+  const card = dispatchCard(PAYLOAD, '/tmp/p.json')
+  assert.equal(card.payload, '/tmp/p.json')
+  assert.equal(card.diff, undefined)
+  assert.equal(card.specs, undefined)
+  assert.ok(JSON.stringify(card).length < 400, 'a card the size of the payload saves nothing')
+})
+
+test('the card still says what is being dispatched, so the run is readable', () => {
+  const card = dispatchCard(PAYLOAD, '/tmp/p.json')
+  assert.equal(card.tier, 'bounded')
+  assert.equal(card.base, 'abc123^')
+  assert.equal(card.devStackUrl, 'http://localhost:8123')
+  assert.deepEqual(card.groups, [{ number: 1, title: 'First', tasks: 3, visual: 2 }])
+  assert.equal(card.changedFiles, 2)
+  assert.equal(card.diffBytes, 40000)
 })

@@ -32,6 +32,7 @@ const VERIFICATION_BLOCK = `verification:
 
 project:
   dev_stack_command: ""
+  dev_stack_url: ""        # required when visual: true, e.g. http://localhost:5173
   test_commands: []
 
 rules: {}

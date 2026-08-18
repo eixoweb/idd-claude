@@ -25,10 +25,20 @@ are running in, then follow it:
 - **architectural** — `superpowers:using-git-worktrees`, and one subagent per
   task via `superpowers:subagent-driven-development`.
 
-**One hard rule the script cannot see.** If `worktree` is true and the dev stack
-serves a single docroot — DDEV, for one — do not use one: the visual gate probes
-what the server serves, so it would score the main checkout while the edits live
-elsewhere. Say so and work in place.
+The shape is decided at this point — **do not re-derive it**. A worktree
+listing, a branch check, a probe for a tool the script already reported on: the
+answer is above, and re-asking is what makes the opening of a run slow.
+
+**One hard rule the script cannot see**, and it applies only when `worktree` is
+true: if the dev stack serves a single docroot — DDEV, for one — do not use a
+worktree. The visual gate probes what the server serves, so it would score the
+main checkout while the edits live elsewhere. Say so and work in place.
+
+When `visual` is on, the preflight also returns `devStack`: the command, the
+`url` the assertions are measured against, and whether something is already
+`listening` on it. Start the stack only if it is not, and hand that same URL to
+the evaluator. Do not reconstruct it from the command string — that works for a
+`http.server 8123` and for nothing else.
 
 ## Session setup
 
@@ -94,27 +104,35 @@ tell it the tier so it can calibrate its own depth: on a small diff it should
 judge the code directly rather than invoke the full `requesting-code-review`
 skill, which costs more than it finds on twenty lines.
 
-**Gather its inputs with one command, and pass them in the dispatch.**
+**Gather its inputs with one command, and hand over the path it prints.**
 
 ```
 node "${CLAUDE_PLUGIN_ROOT}/scripts/evaluator-input-cli.mjs" <change id> <group|""> .
 ```
 
 Pass the group number for an architectural change, an empty string for a
-bounded one — it evaluates every group at once. The command returns, in one
-call: the tier, the derived base ref, the groups with their tasks, each VISUAL
-task's assertion lines ready to pass to `visual-cli.mjs`, the spec content, the
-changed code files, and the diff.
+bounded one — it evaluates every group at once. It assembles everything the
+evaluator needs — the tier, the derived base ref, the dev stack URL, the groups
+with their tasks, each VISUAL task's assertion lines ready to pass to
+`visual-cli.mjs`, the spec content, the changed code files and the diff —
+**writes it to `.evaluator-input.json` in the change folder**, and prints a
+short card naming that path.
 
-The diff it returns **excludes the change's own artifacts**. An evaluator has no
-business re-reading the proposal it measures against, and carrying it inflates
-the payload while diluting the review. The artifact files are listed separately
-if you need to mention them.
+The diff it assembles **excludes the change's own artifacts**. An evaluator has
+no business re-reading the proposal it measures against, and carrying it
+inflates the payload while diluting the review. The artifact files are listed
+separately in the payload if you need to mention them.
 
-Paste that payload into the dispatch. Its charter is that it receives only the
-contract, the specs and the diff and does not go looking — a charter the
-dispatch has to make true, not merely assert. Give it the paths it must *run* —
-the CLIs — not the paths it must *read*.
+**Dispatch the card's `payload` path — never the payload itself.** Transcribing
+that JSON into the Task prompt is thousands of output tokens spent before the
+evaluator has started, and it grows with the diff: the bigger the change, the
+longer the wait before anything is reviewed. The card is there so you can say
+what you are dispatching without reciting it.
+
+Its charter is that it receives only the contract, the specs and the diff and
+does not go looking — a charter the dispatch has to make true, not merely
+assert. One prepared file is not going looking; a tour of the codebase is. Give
+it the paths it must *run* — the CLIs — and the one path it must *read*.
 
 Then act on the verdict:
 

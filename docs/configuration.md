@@ -20,7 +20,6 @@ verification:
   runtime: true                # set to false only for a project with no test suite
   visual: true                 # dev-browser gate
   mutation: false              # mutation testing - off by default
-  subagents: true              # one subagent per task
   floors:                      # a dimension below its floor -> RETRY
     spec: 80
     runtime: 100
@@ -33,6 +32,7 @@ verification:
 
 project:
   dev_stack_command: ""
+  dev_stack_url: ""        # required when visual: true, e.g. http://localhost:5173
   test_commands: []
 
 rules: {}
@@ -108,7 +108,16 @@ finding is expensive.
 ### `dev_stack_command`
 
 How to bring the app up, e.g. `pnpm dev`, `docker compose up -d`, `ddev start`.
-Required when `visual: true`.
+Required when `visual: true`. `/idd:apply` runs it only when nothing is already
+listening on `dev_stack_url`.
+
+### `dev_stack_url`
+
+The origin the visual assertions are measured against, e.g.
+`http://localhost:5173` or `https://project.ddev.site`. Required when
+`visual: true`, and declared rather than derived: a URL inferred from the
+command works for `python3 -m http.server 8123` and for no real dev stack. It
+is what the preflight probes and what the evaluator is handed at dispatch.
 
 ### `test_commands`
 

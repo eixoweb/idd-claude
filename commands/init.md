@@ -29,11 +29,14 @@ Set up this project for the idd-claude workflow.
    ```
    .claude/worktrees/
    .superpowers/
+   openspec/changes/*/.evaluator-input.json
    ```
 
    A worktree is a git repository inside the project. Left untracked, a `git
    add -A` commits it as an embedded repo — a confusing state that clones will
    not carry. `.superpowers/` holds brainstorm mockups, which are scratch.
+   `.evaluator-input.json` is the evaluator's dispatch payload, rewritten
+   before every round.
 
 Never edit files under `openspec/schemas/idd-claude/` in a target project:
 they are a copy, and the next promotion overwrites them.

@@ -57,7 +57,7 @@ test('apply hands the evaluator its inputs rather than sending it looking', () =
   // The evaluator's charter says it receives only the contract, specs and
   // diff. The dispatch has to make that true; asserting it is not enough — and
   // an evaluator that fetches its own inputs spends most of its turns on it.
-  assert.match(applyFlat, /Gather its inputs with one command, and pass them in the dispatch/)
+  assert.match(applyFlat, /Gather its inputs with one command, and hand over the path it prints/)
   assert.match(applyFlat, /a charter the dispatch has to make true, not merely assert/)
   assert.match(apply, /verification\.evaluator_model/)
 })
@@ -103,4 +103,27 @@ test('a fix round is incremental, not a fresh evaluation', () => {
   assert.match(applyFlat, /carried, not re-measured/)
   // runtime is what makes the skips safe rather than optimistic.
   assert.match(applyFlat, /always re-runs.*catches damage anywhere/)
+})
+
+test('apply takes the shape as decided, instead of re-deriving it', () => {
+  // A bounded run opened with `git worktree list` — a question the preflight
+  // had already answered `false`. The docroot caveat that follows the tier
+  // table reads as "the script may be wrong, go and check".
+  assert.match(applyFlat, /do not re-derive it/i)
+  assert.match(applyFlat, /only.{0,40}`worktree` is true/i)
+})
+
+test('apply gets the dev stack from the preflight rather than probing for it', () => {
+  // The same run improvised `lsof -iTCP:8123` to find out whether the stack was
+  // up, and reconstructed the URL from the command string.
+  assert.match(apply, /devStack/)
+  assert.match(applyFlat, /listening/i)
+  assert.doesNotMatch(applyFlat, /lsof/)
+})
+
+test('the evaluator is handed a path, not a pasted payload', () => {
+  // 12.7 KB of JSON on a toy fixture, re-typed by the main model before every
+  // dispatch. That transcription is the wait before the evaluator starts.
+  assert.match(applyFlat, /payload/i)
+  assert.doesNotMatch(applyFlat, /paste that payload into the dispatch/i)
 })

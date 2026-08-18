@@ -44,3 +44,16 @@ export function readVerification(configSource) {
     evaluatorModel: v.evaluator_model ?? 'sonnet',
   }
 }
+
+/**
+ * The project's facts, read once. The preflight and the evaluator dispatch both
+ * need the dev stack URL; two readers of the same key is how they drift apart.
+ */
+export function readProject(configSource) {
+  const project = (parse(String(configSource)) ?? {}).project ?? {}
+  return {
+    devStackCommand: project.dev_stack_command || null,
+    devStackUrl: project.dev_stack_url || null,
+    testCommands: project.test_commands ?? [],
+  }
+}

@@ -1,5 +1,4 @@
-import { parse } from 'yaml'
-import { readVerification } from './config.mjs'
+import { readProject, readVerification } from './config.mjs'
 
 // The tier is not a judgement: the schema the change was created with says it.
 const TIERS = { 'idd-claude-lite': 'bounded', 'idd-claude': 'architectural' }
@@ -19,8 +18,7 @@ const SHAPE = {
  */
 export function preflight({ config, schema, tools }) {
   const { enabled } = readVerification(config)
-  const parsed = parse(String(config)) ?? {}
-  const project = parsed.project ?? {}
+  const project = readProject(config)
 
   const refusals = []
   const notes = []
@@ -34,11 +32,18 @@ export function preflight({ config, schema, tools }) {
 
   if (enabled.includes('visual')) {
     if (!tools.devBrowser) refusals.push('visual is on but dev-browser is not on PATH')
-    if (!project.dev_stack_command) refusals.push('visual is on but project.dev_stack_command is empty')
+    if (!project.devStackCommand) refusals.push('visual is on but project.dev_stack_command is empty')
+    // The evaluator's charter says it is handed this URL. Inferring it from the
+    // command string works for `http.server 8123` and for nothing else.
+    if (!project.devStackUrl) {
+      refusals.push(
+        'visual is on but project.dev_stack_url is empty — the URL the assertions are measured against must be declared, not inferred from the command',
+      )
+    }
   }
 
   if (enabled.includes('runtime')) {
-    if (!project.test_commands?.length) {
+    if (!project.testCommands?.length) {
       refusals.push(
         'runtime is on but project.test_commands is empty — configure them, or set runtime: false to record that this project has no test suite',
       )
@@ -62,6 +67,16 @@ export function preflight({ config, schema, tools }) {
     notes,
     enabled,
     tier: tier ?? null,
+    // Reported, not left to be rediscovered: a run that has to find out whether
+    // the stack is up improvises a port probe, and improvises it differently
+    // every time.
+    devStack: enabled.includes('visual')
+      ? {
+          command: project.devStackCommand,
+          url: project.devStackUrl,
+          listening: tools.devStackListening === true,
+        }
+      : null,
     ...(tier ? SHAPE[tier] : { worktree: null, subagents: null }),
   }
 }
