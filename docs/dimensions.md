@@ -137,6 +137,34 @@ present in the file; nothing verifies an agent obeyed them on a given run. The
 trial observed correct behaviour across three dispatches — that is evidence,
 not a guarantee.
 
+## A fix round re-runs less than a first round
+
+After a fix, most of a group is provably untouched. Re-evaluating all of it is
+what makes a gate too slow to keep using — and the second-order cost of that is
+that it stops being run.
+
+`verdict-cli` returns a `recheck` list when it is told which files the fix
+touched:
+
+| | Re-runs |
+| --- | --- |
+| `spec`, `code` | always — judged against the fix diff, not the whole group |
+| `runtime` | always |
+| `visual` | only if the fix touched a template or stylesheet |
+| `mutation` | only if the fix touched mutable source or a test |
+| `acceptance` | only if the fix touched anything |
+
+The dimensions that are skipped are carried forward at their previous scores,
+and the report says they were carried rather than re-measured.
+
+**What makes the skips safe rather than optimistic** is that `runtime` always
+re-runs. It costs seconds and it catches collateral damage anywhere — so a fix
+that broke something far away still fails, whatever else was skipped.
+
+And, as everywhere else here, the decision is derived from the files rather
+than reported by the evaluator: an evaluator asked to judge what it may skip
+has an obvious incentive.
+
 ## The verdict is computed outside the model
 
 The evaluator produces scores. It does **not** decide the verdict — it calls:

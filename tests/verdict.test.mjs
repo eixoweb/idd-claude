@@ -4,6 +4,7 @@ import {
   UNKNOWN,
   applicableDimensions,
   computeVerdict,
+  dimensionsToRecheck,
   visualCoverageWarning,
 } from '../scripts/lib/verdict.mjs'
 
@@ -171,4 +172,48 @@ test('it warns rather than fails — the verdict is unaffected', () => {
   // should surface the omission, not tyrannise over it.
   const v = computeVerdict({ scores: { spec: 90, code: 90 }, floors, enabled: ['spec', 'code'] })
   assert.equal(v.status, 'PASS')
+})
+
+// ---- What a fix round actually has to re-run ----
+
+const ENABLED = ['spec', 'runtime', 'code', 'visual', 'mutation']
+
+test('the cheap global dimensions always re-run', () => {
+  // runtime is the safety net: it is seconds, and it catches collateral damage
+  // anywhere. spec and code are re-judged against the fix diff itself.
+  const again = dimensionsToRecheck(['README.md'], { enabled: ENABLED })
+  assert.ok(again.includes('runtime'))
+  assert.ok(again.includes('spec'))
+  assert.ok(again.includes('code'))
+})
+
+test('visual is skipped when the fix touched no view file', () => {
+  // Nothing the browser would see has changed, so probing again cannot differ.
+  const again = dimensionsToRecheck(['tests/countdown.test.mjs'], { enabled: ENABLED })
+  assert.ok(!again.includes('visual'))
+})
+
+test('visual re-runs as soon as the fix touched one', () => {
+  assert.ok(dimensionsToRecheck(['index.html'], { enabled: ENABLED }).includes('visual'))
+  assert.ok(dimensionsToRecheck(['styles/a.css'], { enabled: ENABLED }).includes('visual'))
+})
+
+test('mutation re-runs only when the fix touched mutable source', () => {
+  const opts = { enabled: ENABLED, mutateGlobs: ['scripts/lib/**/*.mjs'] }
+  assert.ok(!dimensionsToRecheck(['README.md'], opts).includes('mutation'))
+  assert.ok(dimensionsToRecheck(['scripts/lib/visual.mjs'], opts).includes('mutation'))
+  // A changed test changes the score too — that is the whole point of mutation.
+  assert.ok(dimensionsToRecheck(['tests/visual-parse.test.mjs'], opts).includes('mutation'))
+})
+
+test('a disabled dimension is never re-run', () => {
+  const again = dimensionsToRecheck(['index.html'], { enabled: ['spec', 'runtime', 'code'] })
+  assert.ok(!again.includes('visual'))
+  assert.ok(!again.includes('mutation'))
+})
+
+test('an empty fix diff still re-runs the cheap dimensions', () => {
+  // A fix that changed nothing is itself a finding; the run must not be skipped.
+  const again = dimensionsToRecheck([], { enabled: ENABLED })
+  assert.deepEqual(again.sort(), ['code', 'runtime', 'spec'])
 })

@@ -2,12 +2,19 @@
 import { readFileSync } from 'node:fs'
 import { readVerification } from './lib/config.mjs'
 import { parseTasks } from './lib/tasks.mjs'
-import { applicableDimensions, computeVerdict, visualCoverageWarning } from './lib/verdict.mjs'
+import {
+  applicableDimensions,
+  computeVerdict,
+  dimensionsToRecheck,
+  visualCoverageWarning,
+} from './lib/verdict.mjs'
 
-const [configPath, scoresJson, tasksPath, groupNumber, changedFilesJson] = process.argv.slice(2)
+const [configPath, scoresJson, tasksPath, groupNumber, changedFilesJson, fixedFilesJson] =
+  process.argv.slice(2)
 if (!configPath || !scoresJson) {
   console.error(
-    'usage: verdict-cli.mjs <configPath> <scoresJson> [tasksPath] [groupNumber] [changedFilesJson]',
+    'usage: verdict-cli.mjs <configPath> <scoresJson> [tasksPath] [groupNumber]' +
+      ' [changedFilesJson] [fixedFilesJson]',
   )
   process.exit(2)
 }
@@ -36,4 +43,16 @@ if (group && enabled.includes('visual') && changedFilesJson) {
   if (warning) warnings.push(warning)
 }
 
-console.log(JSON.stringify({ ...verdict, applicable, warnings }))
+// On a fix round, say which dimensions the fix could actually have reached.
+let recheck
+if (fixedFilesJson) {
+  let mutateGlobs = []
+  try {
+    mutateGlobs = JSON.parse(readFileSync('stryker.config.json', 'utf8')).mutate ?? []
+  } catch {
+    // No Stryker config: mutation cannot be scoped, and is likely disabled.
+  }
+  recheck = dimensionsToRecheck(JSON.parse(fixedFilesJson), { enabled: applicable, mutateGlobs })
+}
+
+console.log(JSON.stringify({ ...verdict, applicable, warnings, ...(recheck ? { recheck } : {}) }))
