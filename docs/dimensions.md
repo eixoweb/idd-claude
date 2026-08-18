@@ -1,7 +1,9 @@
 # Dimensions and verdicts
 
-At the end of every task group an evaluator subagent scores the work on up to
-six independent dimensions, then a verdict is computed **outside the model**.
+An evaluator subagent scores the work on up to six independent dimensions, then
+a verdict is computed **outside the model**. It runs once per change on a
+bounded tier and once per group on an architectural one — see
+[workflow.md](workflow.md).
 
 ## The six dimensions
 

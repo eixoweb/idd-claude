@@ -77,10 +77,38 @@ mode you must invoke the gates explicitly yourself.
 The evaluator runs it internally; calling it here pays for the same review
 twice.
 
-## End of each group
+## Evaluation
 
-Dispatch the `evaluator` agent **with the model named in
-`verification.evaluator_model`** (default `sonnet`).
+**When to evaluate depends on the tier — the cost of the gate has to be
+proportionate to the change, or it stops being used.**
+
+| | Bounded | Architectural |
+| --- | --- | --- |
+| when | **once, after the last group** | after each group |
+| the evaluator sees | the whole change | that group's diff |
+
+A bounded change is one unit of work. Splitting it into groups organises the
+writing; it is not a reason to pay for the gate twice. Evaluating once covers
+exactly the same code.
+
+For an architectural change, evaluate per group — but **do not idle while the
+verdict comes back.** Dispatch the evaluator in the background and start the
+next group, unless the next group builds on the one being evaluated. When the
+verdict lands:
+
+- `PASS` → nothing to do, carry on.
+- `RETRY` or `BLOCK` → stop the current group, work the fix tasks, re-dispatch.
+  Work done meanwhile is not wasted: it is re-evaluated with its own group.
+
+Only serialise when the groups genuinely depend on each other. Waiting on a
+verdict for an independent group buys nothing and doubles the wall clock.
+
+## Dispatching the evaluator
+
+Use the model named in `verification.evaluator_model` (default `sonnet`), and
+tell it the tier so it can calibrate its own depth: on a small diff it should
+judge the code directly rather than invoke the full `requesting-code-review`
+skill, which costs more than it finds on twenty lines.
 
 **Gather its inputs and pass them in the dispatch. Do not tell it to go and
 find them.** Its charter is that it receives only the contract, the specs and
@@ -90,17 +118,20 @@ evaluator that has to locate its own inputs spends most of its turns doing it.
 
 Collect, before dispatching:
 
-- the group's heading and its tasks, from `tasks.md`;
-- the assertion lines of each `VISUAL` task in the group, as a JSON array per
-  task, ready to pass to `visual-cli.mjs`;
+- the group's heading and its tasks, from `tasks.md` — or every group's, when
+  evaluating a bounded change once;
+- the assertion lines of each `VISUAL` task, as a JSON array per task, ready to
+  pass to `visual-cli.mjs`;
 - the change's spec files, in full;
-- `git diff <group base>..HEAD`, and the list of changed files as a JSON array;
+- `git diff <base>..HEAD`, and the list of changed files as a JSON array;
 - the base ref and the dev stack base URL.
 
 Pass all of it in the prompt. Give it the paths it must *run* — the CLIs — not
 the paths it must *read*.
 
-- `PASS` → next group.
+Then act on the verdict:
+
+- `PASS` → done, or next group.
 - `RETRY` → append the fix tasks it generated to `tasks.md` and work them, then
   re-dispatch. Stop at `verification.max_iterations` and report to the user.
 - `BLOCK` → fix the reported CRITICAL/HIGH findings, or the infrastructure

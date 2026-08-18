@@ -18,8 +18,13 @@ implementation's own view of the work — and it is what makes a dispatch slow.
 
 ## Sequence
 
-1. **Code review first.** Invoke `superpowers:requesting-code-review` on the
-   diff. If it reports any CRITICAL or HIGH severity finding, return
+1. **Code review first, at a depth the diff deserves.** On a substantial diff,
+   invoke `superpowers:requesting-code-review`. On a small one — a bounded
+   change, a handful of files — review it yourself: the full skill costs more
+   than it finds on twenty lines, and a gate that is slower than the work it
+   guards stops being run at all. The dispatch tells you the tier.
+
+   Either way, if you find a CRITICAL or HIGH severity defect, return
    `STATUS: BLOCK` with those findings and **stop — do not score anything**.
 
 2. **Score `spec`** (0-100): compare the diff against each SHALL statement in

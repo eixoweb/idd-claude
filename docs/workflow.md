@@ -101,9 +101,21 @@ Three layers, deliberately redundant:
 
 ## The evaluation loop
 
-At the end of every task group, an evaluator subagent receives *only* the
-group's contract, the change's specs, and the group's diff — never the
-implementation conversation. A ticked checkbox is a claim, not evidence.
+An evaluator subagent receives *only* the contract, the change's specs, and the
+diff — never the implementation conversation. A ticked checkbox is a claim, not
+evidence.
+
+**How often it runs follows the tier**, because a gate that costs more than the
+change is worth stops being used:
+
+| | Bounded | Architectural |
+| --- | --- | --- |
+| when | once, after the last group | after each group |
+
+A bounded change is one unit of work — groups organise the writing, they are
+not a reason to pay for the gate twice. And on an architectural change, an
+evaluator running on group N does not stop group N+1 from starting, unless N+1
+builds on N: the evaluator reads a diff, it does not hold the working tree.
 
 - **PASS** → next group.
 - **RETRY** → it writes `FIX` tasks; work them and re-dispatch. Capped at

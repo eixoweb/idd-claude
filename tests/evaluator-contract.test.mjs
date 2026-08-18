@@ -28,6 +28,7 @@ test('the evaluator works from the dispatch rather than fetching its inputs', ()
 test('the evaluator prompt encodes the design rules', () => {
   const body = readFileSync(agentPath, 'utf8')
   assert.match(body, /requesting-code-review/, 'it must run the code review itself')
+  assert.match(body, /at a depth the diff deserves/, 'review depth must follow the diff')
   assert.match(body, /CRITICAL|HIGH/, 'it must block on critical findings without scoring')
   assert.match(body, /verdict-cli\.mjs/, 'it must not compute the verdict itself')
   assert.match(body, /re-?run|replay/i, 'it must replay the VISUAL assertions rather than trust them')
