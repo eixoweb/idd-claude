@@ -46,6 +46,15 @@ test('propose picks the schema per change rather than editing config', () => {
   assert.doesNotMatch(propose, /edit .*config\.yaml/i)
 })
 
+test('init gitignores the workspaces the tooling creates', () => {
+  // A worktree is a git repo inside the project: untracked, a git add -A
+  // commits it as an embedded repository.
+  const init = read('init.md')
+  assert.match(init, /\.claude\/worktrees\//)
+  assert.match(init, /\.superpowers\//)
+  assert.match(init, /embedded repo/i)
+})
+
 test('verify refuses to pass on unticked tasks', () => {
   assert.match(read('verify.md'), /every checkbox|all tasks .*ticked/i)
 })

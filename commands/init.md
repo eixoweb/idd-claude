@@ -23,6 +23,18 @@ Set up this project for the idd-claude workflow.
    - that `verification.spec_as_source` and `verification.mutation` are off by
      default, and how to enable each.
 
+4. Make sure `.gitignore` covers the workspaces the tooling creates, adding any
+   that are missing:
+
+   ```
+   .claude/worktrees/
+   .superpowers/
+   ```
+
+   A worktree is a git repository inside the project. Left untracked, a `git
+   add -A` commits it as an embedded repo — a confusing state that clones will
+   not carry. `.superpowers/` holds brainstorm mockups, which are scratch.
+
 Never edit files under `openspec/schemas/idd-claude/` in a target project:
 they are a copy, and the next promotion overwrites them.
 
