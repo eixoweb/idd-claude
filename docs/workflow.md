@@ -128,16 +128,15 @@ Verify does four things, and only the first and the last are ordered:
    clean. An unfinished change is not worth measuring.
 2. **Measure** — one call to `verify-cli.mjs` runs every mechanical dimension the
    config enables and returns a verdict over them. Started in the background.
-3. **Judge** — Completeness, Correctness, Coherence, plus an independent
-   `requesting-code-review` dispatched alongside the measuring.
+3. **Judge** — Completeness, Correctness, Coherence. No code review by default:
+   it answers whether the code is good, not whether it does what the spec asked,
+   and only the second is worth blocking on. `--review` includes it.
 4. **Report** — one `verification.md`: PASS, PASS WITH WARNINGS, FAIL or
    BLOCKED, written once every strand is in.
 
 **Steps 2 and 3 share no input.** The scripts read the config and the tasks, the
-review reads the diff, the spec-to-code reading reads the specs — so the two slow
-ones start first and the reading happens while they run. In sequence the wall
-clock is their sum, and with `mutation` on the scripts are the longest thing in
-the run.
+spec-to-code reading reads the specs — so the scripts start first and the reading
+happens while they run. With `mutation` on they are the longest thing in the run.
 
 `BLOCKED` is not `FAIL`. It means a dimension could not be measured — a dev
 stack that would not answer — and saying so is the point. See
@@ -151,12 +150,16 @@ stack that would not answer — and saying so is the point. See
 | `subagent-driven-development` | one subagent per task |
 | `dispatching-parallel-agents` | genuinely independent groups in parallel |
 | `verification-before-completion` | invoked by `/idd:verify` before it claims anything |
-| `requesting-code-review` | the independent review, invoked by `/idd:verify` |
+| `requesting-code-review` | the independent review, behind `/idd:review` |
 
-`requesting-code-review` belongs to verify, not to apply. It used to be
-forbidden during apply because the evaluator called it internally — a subagent
-paying for a subagent. With the evaluator gone it is invoked once, where the
-judging happens.
+`requesting-code-review` is its own command. It used to be forbidden during apply
+because the evaluator called it internally — a subagent paying for a subagent —
+and then it was folded into verify. It sits outside both now: it is the
+workflow's only outside opinion, worth running before a pull request or on a
+change you did not write, and worth nothing as a ritual nobody reads.
+
+When it does not run, `/idd:verify` records that no independent review ran. An
+absence nobody writes down becomes an assumption.
 
 If subagents are unavailable, `superpowers:executing-plans` is the fallback —
 but it does **not** transitively activate TDD, so the gate must then be invoked

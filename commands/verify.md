@@ -6,6 +6,9 @@ description: "The gate: measure the change, judge it against its specs, and writ
 Verify the change named in the argument. This is the workflow's only gate —
 everything before it implements, this decides.
 
+Pass `--review` to include an independent code review in the run. It is off by
+default and available on its own as `/idd:review`.
+
 ## 1. Structure
 
 ```
@@ -24,14 +27,11 @@ stop — an unfinished change is not verifiable.
 
 Confirm the working tree is clean and the change's commits exist.
 
-## 2. Measure and review — start both, then read
+## 2. Measure — start it, then read
 
-Three things happen here and **they share no input**: the scripts need the
-config and the tasks, the code review needs the diff, the reading needs the
-specs. Run in sequence their wall clock is the sum, and the two slow ones are
-the ones you can start and walk away from.
-
-**Start both before you read anything.**
+The scripts need the config and the tasks; the reading in step 3 needs the specs.
+They share no input, and the scripts are the slow half — so start them and do not
+sit watching.
 
 Measure, in the background:
 
@@ -47,17 +47,12 @@ time cost four tool round trips, each worth more than the script it wraps. With
 `mutation` on it is the longest thing in the run, which is exactly why it should
 not be blocking a reading it has nothing to do with.
 
-Review, as a subagent: invoke `superpowers:requesting-code-review`. It reviews
-independently, which is the point — an author is the worst judge of whether the
-work matches the intent, and this is the one place in the workflow where an
-outside opinion is worth its cost. Dispatch it and **do not idle** waiting on it.
+**While it runs**, judge the three dimensions in step 3 yourself. That reading is
+yours to do and needs nothing from the scripts.
 
-**While they run**, judge the three dimensions in step 3 yourself. That reading is
-yours to do and needs neither of them.
-
-**Collect both before writing the outcome.** A report assembled from one strand
-while another is still running has measured less than it claims, and this report
-exists precisely so a reviewer does not have to take the run on trust.
+**Collect it before writing the outcome.** A report assembled while a strand is
+still running has measured less than it claims, and this report exists precisely
+so a reviewer does not have to take the run on trust.
 
 Take the command's output as measured: re-running a dimension by hand to confirm
 it is green is the one check that cannot fail.
@@ -87,8 +82,14 @@ and re-deciding its output buys a dependency and loses nothing else.
 - **Coherence** — the change follows the design and the patterns already in the
   codebase.
 
-The code review dispatched in step 2 lands here: fold its findings in with these
-three when you write the report.
+**No code review runs here by default.** It answers a different question — is
+this code good, rather than does it do what the spec asked — and only the second
+is worth blocking on. Pass `--review` to include it, or run `/idd:review` on its
+own afterwards.
+
+Either way, **say so in the report**: when no review ran, write that no
+independent review ran and name `/idd:review`. An absence nobody records becomes
+an assumption, and this is the workflow's only outside opinion.
 
 **Work no requirement governs is a CRITICAL.** If the diff delivers behaviour
 that no SHALL covers, say so and fail. Do **not** write the missing requirement:

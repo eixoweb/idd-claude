@@ -20,6 +20,7 @@ test('every command has frontmatter with a name and a description', () => {
     'apply.md',
     'propose.md',
     'verify.md',
+    'review.md',
     'archive.md',
   ]) {
     assert.ok(existsSync(join(commandsRoot, name)), `missing command: ${name}`)
@@ -99,7 +100,7 @@ test('commands sit directly in commands/, not in a subdirectory', () => {
   const entries = readdirSync(commandsRoot, { withFileTypes: true })
   const nested = entries.filter((e) => e.isDirectory()).map((e) => e.name)
   assert.deepEqual(nested, [], `commands must not be nested: ${nested.join(', ')}`)
-  assert.equal(entries.filter((e) => e.name.endsWith('.md')).length, 6)
+  assert.equal(entries.filter((e) => e.name.endsWith('.md')).length, 7)
 })
 
 test('the plugin name is the command namespace the docs promise', () => {

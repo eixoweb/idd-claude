@@ -26,11 +26,13 @@ test('verify judges what no script can settle', () => {
   assert.match(verify, /Coherence/)
 })
 
-test('the code review is independent, and this is where it is paid for', () => {
-  // apply used to forbid it because the evaluator ran it internally — a subagent
-  // paying for another subagent.
-  assert.match(verify, /superpowers:requesting-code-review/)
-  assert.match(flat, /an author is the worst judge/i)
+test('the code review is opt-in, and its absence is recorded rather than implied', () => {
+  // It answers a different question from the gate's — is this code good, not
+  // does it do what the spec asked — and it was the most expensive strand of a
+  // run that happens on every change.
+  assert.match(verify, /--review/)
+  assert.match(flat, /\/idd:review/)
+  assert.match(flat, /no independent review ran/i)
 })
 
 test('work no requirement governs fails, and the fix is not the report to write', () => {
@@ -55,13 +57,11 @@ test('the three independent halves of verify do not wait on each other', () => {
   // The scripts, the code review and the spec-to-code reading share no input.
   // Run in sequence the wall clock is their sum; the review is a subagent and
   // the scripts can hold a browser and a mutation run.
-  assert.match(flat, /Start both.*before you read anything|do not idle/i)
   assert.match(flat, /in the background/i)
-  assert.match(flat, /while they run/i)
+  assert.match(flat, /while it runs/i)
 })
 
 test('the outcome waits for every strand, so nothing is reported half-measured', () => {
-  assert.match(flat, /Collect both/i)
   assert.match(flat, /before writing the outcome|only then/i)
 })
 

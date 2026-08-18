@@ -8,14 +8,14 @@ For anyone modifying the plugin. If you only want to *use* it, read
 ```
 idd-claude/
 ├── .claude-plugin/          plugin.json (version drives drift detection), marketplace.json
-├── commands/               explore, propose, apply, verify, archive, init
+├── commands/               explore, propose, apply, verify, review, archive, init
 ├── skills/                  10 skills — 8 from intent-driven-template, 2 from mattpocock, plus visual-verification
 ├── schema/                  the full OpenSpec schema + templates
 ├── schema-lite/             the bounded schema + templates
 ├── scripts/
 │   ├── lib/                 all the logic, unit-tested
 │   └── *-cli.mjs            thin shells that spawn external tools
-├── tests/                   24 files, 222 tests
+├── tests/                   26 files, 247 tests
 └── docs/superpowers/        design specs and implementation plans (French)
 ```
 
@@ -39,7 +39,7 @@ Verify packaging without publishing:
 claude --plugin-dir . plugin details idd
 ```
 
-It should report 16 skills — ten real skills plus the six commands, which that
+It should report 17 skills — ten real skills plus the seven commands, which that
 inventory labels as skills too. There are no agents: the workflow delegates its
 one independent opinion to `superpowers:requesting-code-review` rather than
 shipping a reviewer of its own.
@@ -204,7 +204,7 @@ happened for one reason: Stryker drives vitest natively and cannot drive
 `node --test`.
 
 ```bash
-npm test                          # 222 tests, ~2s
+npm test                          # 247 tests, ~2s
 ./node_modules/.bin/stryker run   # mutation score, ~20s
 ```
 

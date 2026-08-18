@@ -42,12 +42,13 @@ floor. `/idd:verify` judges them as prose, once:
   scenario is covered.
 - **Coherence** — the change follows the design and the patterns already there.
 
-The code itself goes through `superpowers:requesting-code-review`, which
-reviews independently. That is the one place in the workflow where an outside
-opinion is worth what it costs: an author is the worst judge of whether the work
-matches the intent.
+There is no switch for these three. A judgement you can turn off is not a gate.
 
-There is no switch for these. A judgement you can turn off is not a gate.
+The code review is a fourth thing, and it does have a switch — `/idd:verify
+--review`, or `/idd:review` on its own. It asks whether the code is good rather
+than whether it does what the spec asked, and only the second is worth blocking
+on. It remains the workflow's only outside opinion, which is why verify records
+its absence in the report rather than leaving it to be assumed.
 
 ## UNKNOWN is not zero
 
