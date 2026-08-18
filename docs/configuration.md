@@ -68,27 +68,17 @@ for the executable-spec workflow. The upstream template expressed the same
 activation as a commented prose line in `rules:`, which is enough to steer
 drafting but not enough to make an evaluator branch. One boolean, no drift.
 
-### `subagents`
+### What is deliberately not here
 
-`true` dispatches one subagent per task through
-`superpowers:subagent-driven-development`. `false` does the work directly —
-appropriate for bounded changes, where the per-task isolation is not worth the
-token cost.
+**Subagents and worktrees are not settings.** How a run is shaped varies from
+one change to the next, and the tier already says it: a bounded change works in
+place without subagents, an architectural one may use both. Freezing that in
+project config answers a per-change question in the wrong place, and adds two
+knobs that have to be revisited every time the work changes shape.
 
-### `worktree`
-
-`false` by default. A worktree isolates the change from concurrent work — and
-if nothing runs concurrently, it isolates from nothing while still costing a
-duplicated install, an editor pointed at the wrong directory, and a dev server
-serving the wrong tree.
-
-Turn it on when task groups genuinely run in parallel, when you need the main
-checkout free while a change is in flight, or when you want a workspace you can
-delete without thinking.
-
-**Never turn it on for a single-docroot stack** such as DDEV: the visual gate
-probes what the server serves, so it would measure the main checkout while the
-edits live in the worktree — a green gate on the wrong files.
+The config holds project *facts* (`runtime`, `visual`) and *policy*
+(`mutation`, `spec_as_source`, floors, iteration cap, evaluator model). Nothing
+that varies per change belongs in it.
 
 ### `floors`
 

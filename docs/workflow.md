@@ -20,7 +20,7 @@ at all.
 | Tier | What runs | Order of magnitude |
 | --- | --- | --- |
 | **Spike** | nothing — the question is answered and the work stops | ~1 session |
-| **Bounded** | `proposal → specs → tasks → apply`, no design, no ADR, `subagents: false` | ~5 sessions |
+| **Bounded** | `proposal → specs → tasks → apply`, no design, no ADR, no subagents, no worktree | ~5 sessions |
 | **Architectural** | everything, one subagent per task, evaluator per group | 20–30 sessions |
 
 The tier is decided by a conversation *after* the change is understood, not by
@@ -116,7 +116,7 @@ implementation conversation. A ticked checkbox is a claim, not evidence.
 
 | Skill | Role |
 | --- | --- |
-| `using-git-worktrees` | isolated workspace — only when `worktree: true` |
+| `using-git-worktrees` | isolated workspace — architectural tier only |
 | `subagent-driven-development` | one subagent per task |
 | `dispatching-parallel-agents` | genuinely independent groups in parallel |
 | `verification-before-completion` | final pass |
@@ -166,11 +166,11 @@ makes adoption on an existing codebase bearable.
 
 ## Known constraints
 
-**Worktrees are off by default.** They isolate a change from concurrent work,
-and most changes have none to isolate from. Turn `verification.worktree` on for
-parallel groups or a disposable workspace — but never for a single-docroot
-stack such as DDEV, where the visual gate would probe the main checkout while
-the edits live in the worktree.
+**Worktrees follow the tier, not a setting.** They isolate a change from
+concurrent work, and a bounded change has none to isolate from — so it works in
+place. An architectural change with parallel groups uses one. Never on a
+single-docroot stack such as DDEV, where the visual gate would probe the main
+checkout while the edits live in the worktree.
 
 **Projects with no test suite.** Set `runtime: false` to record the decision.
 Leaving it on with no test commands makes every group BLOCK, and `/idd:apply`

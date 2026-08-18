@@ -28,19 +28,26 @@ run; it does not quietly disappear from the verdict.
 
 ## Session setup
 
-1. **Workspace.** Read `verification.worktree`.
+1. **Decide the shape of the run from the tier, and say what you chose.**
 
-   - `false` (the default) — work in place, on the current branch. A worktree
-     isolates from concurrent work; one person doing one change at a time has
-     none to isolate from, and a branch already protects the main line.
-   - `true` — create one with `superpowers:using-git-worktrees`. Worth it when
-     task groups run in parallel, when you need the main checkout free while a
-     change is in flight, or when you want the workspace to be disposable.
+   The tier comes from `/idd:explore`, or from the schema the change was
+   created with — `idd-claude-lite` is bounded, `idd-claude` is architectural.
+   It already answers both questions below; neither is a project setting,
+   because both vary from one change to the next.
 
-   Whichever it is, say so at the start of the run. And if it is `true` while
-   the dev stack serves a single docroot — DDEV, for one — stop: the visual
-   gate would probe the main checkout while you edit the worktree, and score
-   the wrong files. Turn it off for that project.
+   | | Bounded | Architectural |
+   | --- | --- | --- |
+   | subagents | no — do the work directly | one per task, via `superpowers:subagent-driven-development` |
+   | worktree | no — work in place on the current branch | `superpowers:using-git-worktrees`, when groups run in parallel or the workspace should be disposable |
+
+   A worktree isolates a change from concurrent work. One person doing one
+   thing has no concurrency to isolate from, and the branch already protects
+   the main line — so the default for a bounded change is to work in place.
+
+   **One hard rule, not a judgement.** If `visual` is enabled and the dev stack
+   serves a single docroot — DDEV, for one — never use a worktree. The gate
+   probes what the server serves, so it would score the main checkout while the
+   edits live elsewhere: green on the wrong files.
 2. Invoke `superpowers:test-driven-development`. This is mandatory and holds
    "no GREEN without a preceding RED" for the whole session.
 3. Read `tasks.md` and group the work:
@@ -59,8 +66,8 @@ Dispatch on the keyword **after** the ordinal — never on the ordinal itself.
 | `FIX` | apply the fix from the previous evaluation round |
 | `ACCEPT` | run the Gherkin scenario (only when spec_as_source is on) |
 
-When `verification.subagents` is true, dispatch one subagent per task with
-`superpowers:subagent-driven-development`. When false, do the work directly.
+Dispatch one subagent per task with `superpowers:subagent-driven-development`
+when the tier calls for it (see step 1), otherwise do the work directly.
 
 If subagents are unavailable, fall back to `superpowers:executing-plans` — but
 note that it **does not transitively activate** TDD or code review, so in that

@@ -26,13 +26,17 @@ adds a verification layer that a screenshot or a green suite cannot fake.
 
 ## Prerequisites
 
-| Requirement      | Install                                                     | Needed for |
-| ---------------- | ----------------------------------------------------------- | ---------- |
-| OpenSpec ≥ 1.9.0 | `npm install -g @fission-ai/openspec@latest`                 | everything |
-| Superpowers      | `/plugin install superpowers@claude-plugins-official`        | everything |
-| dev-browser      | `npm install -g dev-browser && dev-browser install`          | the `visual` dimension |
-| cucumber-js      | `npm i -D @cucumber/cucumber` in the target project          | the `acceptance` dimension (off by default) |
-| Stryker          | `npm i -D @stryker-mutator/core @stryker-mutator/vitest-runner` in the target project | the `mutation` dimension (off by default) |
+
+| Requirement      | Install                                                                               | Needed for                                  |
+| ---------------- | ------------------------------------------------------------------------------------- | ------------------------------------------- |
+| OpenSpec ≥ 1.9.0 | `npm install -g @fission-ai/openspec@latest`                                          | everything                                  |
+| Superpowers      | `/plugin install superpowers@claude-plugins-official`                                 | everything                                  |
+| dev-browser      | `npm install -g dev-browser && dev-browser install`                                   | the `visual` dimension                      |
+| cucumber-js      | `npm i -D @cucumber/cucumber` in the target project                                   | the `acceptance` dimension (off by default) |
+| Stryker          | `npm i -D @stryker-mutator/core @stryker-mutator/vitest-runner` in the target project | the `mutation` dimension (off by default)   |
+
+
+
 
 ## Install
 
@@ -46,6 +50,7 @@ Then, from the root of a project you want to use it in:
 ```bash
 openspec init --tools none
 ```
+
 ```
 /idd:init
 ```
@@ -76,14 +81,18 @@ floor is enough to fail.** See [docs/dimensions.md](docs/dimensions.md).
 
 ## Documentation
 
-| Page | What it covers |
-| --- | --- |
-| [docs/workflow.md](docs/workflow.md) | The pipeline, the three tiers, worked examples |
-| [docs/dimensions.md](docs/dimensions.md) | The six scored dimensions, floors, verdicts |
-| [docs/configuration.md](docs/configuration.md) | Every key of `openspec/config.yaml` |
-| [docs/architecture.md](docs/architecture.md) | How the plugin is built, for anyone modifying it |
-| `docs/superpowers/specs/` | The design documents and their rationale (French) |
-| `docs/superpowers/plans/` | The implementation plans (French) |
+
+| Page                                           | What it covers                                    |
+| ---------------------------------------------- | ------------------------------------------------- |
+| [docs/workflow.md](docs/workflow.md)           | The pipeline, the three tiers, worked examples    |
+| [docs/dimensions.md](docs/dimensions.md)       | The six scored dimensions, floors, verdicts       |
+| [docs/configuration.md](docs/configuration.md) | Every key of `openspec/config.yaml`               |
+| [docs/architecture.md](docs/architecture.md)   | How the plugin is built, for anyone modifying it  |
+| `docs/superpowers/specs/`                      | The design documents and their rationale (French) |
+| `docs/superpowers/plans/`                      | The implementation plans (French)                 |
+
+
+
 
 ## Development
 
