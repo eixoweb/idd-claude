@@ -1,5 +1,5 @@
 ---
-name: "IDD: Explore"
+name: explore
 description: "Think a change through before opening it, and decide whether it deserves the pipeline at all"
 ---
 

@@ -25,7 +25,10 @@ test('every command has frontmatter with a name and a description', () => {
     assert.ok(existsSync(join(commandsRoot, name)), `missing command: ${name}`)
     const frontmatter = parseFrontmatter(read(name))
     assert.ok(frontmatter, `${name}: no frontmatter`)
-    assert.ok(frontmatter.name?.length > 0, `${name}: no name`)
+    // The plugin namespace is prepended automatically, so a decorated name
+    // renders as /idd:IDD: Init. The name is the bare command word.
+    assert.equal(frontmatter.name, name.replace(/\.md$/, ''), `${name}: name must match the file`)
+    assert.doesNotMatch(frontmatter.name, /[:\s]/, `${name}: no prefix or spaces in a command name`)
     assert.ok(frontmatter.description?.length > 0, `${name}: no description`)
   }
 })

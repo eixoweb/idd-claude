@@ -1,5 +1,5 @@
 ---
-name: "IDD: Archive"
+name: archive
 description: "Fold the change's delta specs into the living specs and archive it"
 ---
 

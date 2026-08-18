@@ -1,5 +1,5 @@
 ---
-name: "IDD: Apply"
+name: apply
 description: "Implement a change under enforced TDD, with a scored evaluator gate at the end of each task group"
 ---
 
