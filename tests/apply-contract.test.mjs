@@ -26,6 +26,19 @@ test('apply wires the multi-agent layer', () => {
   assert.match(apply, /superpowers:verification-before-completion/)
 })
 
+const applyFlat = apply.replace(/\s+/g, ' ')
+
+test('a bounded change is evaluated once, not once per group', () => {
+  // The gate has to cost less than the change is worth, or it stops being used.
+  assert.match(applyFlat, /once, after the last group/)
+  assert.match(applyFlat, /not a reason to pay for the gate twice/)
+})
+
+test('an independent group does not wait on the previous verdict', () => {
+  assert.match(applyFlat, /do not idle while the verdict comes back/i)
+  assert.match(applyFlat, /Only serialise when the groups genuinely depend/)
+})
+
 test('apply hands the evaluator its inputs rather than sending it looking', () => {
   // The evaluator's charter says it receives only the contract, specs and
   // diff. The dispatch has to make that true; asserting it is not enough — and
