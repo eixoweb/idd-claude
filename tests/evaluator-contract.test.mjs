@@ -64,6 +64,16 @@ test('verdict-cli BLOCKS when an enabled dimension was not scored', () => {
   assert.equal(JSON.parse(out).status, 'BLOCK')
 })
 
+test('the evaluator never proposes editing the specs it measures against', () => {
+  // A real run had it write the missing requirement for ungoverned work. The
+  // spec and the code then came from the same round, with no human between
+  // them — and the code was correct by construction.
+  const body = readFileSync(agentPath, 'utf8').replace(/\s+/g, ' ')
+  assert.match(body, /Do \*\*not\*\* generate a fix task that writes the missing requirement/)
+  assert.match(body, /Never propose a fix task that edits the specs you are measuring against/)
+  assert.match(body, /grows the spec, the other drops the code/)
+})
+
 test('a REFACTOR touching a test assertion blocks rather than scores', () => {
   // It used to cap the spec dimension at 50 — a rule that could never fire,
   // because the review catches it as CRITICAL first and BLOCK stops before any

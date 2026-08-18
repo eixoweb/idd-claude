@@ -58,6 +58,7 @@ in `scripts/`.**
 | `acceptance.mjs` | `acceptance-cli.mjs` | extractor, cucumber-js |
 | `preflight.mjs` | `preflight-cli.mjs` | `which` |
 | `evaluator-input.mjs` | `evaluator-input-cli.mjs` | git |
+| `round-record.mjs` | `record-round-cli.mjs` | — |
 | `promote-schema.mjs`, `openspec-version.mjs`, `frontmatter.mjs` | `promote.mjs` | openspec |
 
 The split is why the interesting parts are testable without fixtures or

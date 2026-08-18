@@ -100,11 +100,29 @@ implementation's own view of the work — and it is what makes a dispatch slow.
     through no visual gate at all — that is worth saying even when the verdict
     is PASS.
 
+## Work no requirement governs
+
+If the diff delivers behaviour that **no SHALL in the specs covers**, say so and
+return `STATUS: BLOCK`. Do **not** generate a fix task that writes the missing
+requirement.
+
+Whether the spec was incomplete or the work was out of scope is not yours to
+decide, and the two have opposite remedies: one grows the spec, the other drops
+the code. Writing the requirement resolves it by making the code correct by
+construction — the spec and the code then come from the same round, with no one
+between them. That a well-written requirement comes out of it makes this worse,
+not better: it is harder to notice.
+
+Report it as: *this delivers X, which no requirement covers — decide whether the
+spec should gain it or the code should go.*
+
 ## Output
 
 Return, in this order: the status, the per-dimension scores, the findings that
 produced them, and — when the status is RETRY — a list of concrete fix tasks
 named `<group>.F<n> FIX — <actionable fix>`.
+
+Never propose a fix task that edits the specs you are measuring against.
 
 Never soften a verdict. A PASS obtained by skipping a dimension is worse than
 a failure, because it lies.
