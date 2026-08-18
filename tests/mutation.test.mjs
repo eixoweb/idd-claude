@@ -1,6 +1,6 @@
 import { test } from 'vitest'
 import assert from 'node:assert/strict'
-import { chooseMutationScope, readMutationScore } from '../scripts/lib/mutation.mjs'
+import { chooseMutationScope, readMutationScore, reporterPaths } from '../scripts/lib/mutation.mjs'
 
 const report = (statuses) => ({
   files: {
@@ -107,4 +107,33 @@ test('a pure source diff still scopes', () => {
   const scope = chooseMutationScope(['scripts/lib/verdict.mjs'], GLOBS)
   assert.equal(scope.mode, 'scoped')
   assert.deepEqual(scope.mutate, ['scripts/lib/verdict.mjs'])
+})
+
+// ---- the reports have to exist before anyone can read them ----
+
+test('the reporter paths fall back to Stryker own defaults', () => {
+  // html is on by Stryker default and json is not — and json is the one the
+  // score is read from, so a project with a perfectly valid config but no json
+  // reporter used to get a silent UNKNOWN.
+  const paths = reporterPaths('{}')
+  assert.equal(paths.json, 'reports/mutation/mutation.json')
+  assert.equal(paths.html, 'reports/mutation/mutation.html')
+})
+
+test('a project that moved its reports is followed, not overruled', () => {
+  const paths = reporterPaths(
+    JSON.stringify({
+      jsonReporter: { fileName: 'out/m.json' },
+      htmlReporter: { fileName: 'out/m.html' },
+    }),
+  )
+  assert.equal(paths.json, 'out/m.json')
+  assert.equal(paths.html, 'out/m.html')
+})
+
+test('an unreadable config falls back rather than throwing', () => {
+  // The score is what matters; a broken config file is Stryker's to complain
+  // about, not ours to crash on.
+  assert.equal(reporterPaths('not json at all').json, 'reports/mutation/mutation.json')
+  assert.equal(reporterPaths(null).html, 'reports/mutation/mutation.html')
 })

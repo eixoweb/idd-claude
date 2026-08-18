@@ -80,9 +80,11 @@ const scored = (name, script, args, judge) => {
       cwd: projectRoot,
       encoding: 'utf8',
     })
-    const { score, error } = JSON.parse(out.trim().split('\n').at(-1))
+    const { score, error, ...rest } = JSON.parse(out.trim().split('\n').at(-1))
     dimensions[name] =
-      score === 'UNKNOWN' ? { status: 'UNKNOWN', error } : { status: judge(score), score }
+      score === 'UNKNOWN'
+        ? { status: 'UNKNOWN', error, ...rest }
+        : { status: judge(score), score, ...rest }
   } catch (error) {
     dimensions[name] = { status: 'UNKNOWN', error: firstLine(error) }
   }

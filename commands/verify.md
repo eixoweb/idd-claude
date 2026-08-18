@@ -57,6 +57,11 @@ so a reviewer does not have to take the run on trust.
 Take the command's output as measured: re-running a dimension by hand to confirm
 it is green is the one check that cannot fail.
 
+When `mutation` runs it also returns `htmlReport` — the path to Stryker's
+annotated source, where a surviving mutant is shown on the line it survived on.
+**Put that path in the report.** A mutation score is a number nobody can act on;
+the page behind it is the list of tests that would not have caught the bug.
+
 A dimension reported `UNKNOWN` is infrastructure that would not answer, not a
 failing change. The verdict is `BLOCKED`, and that is what you report — never
 `FAIL`, and never a quiet `PASS`.

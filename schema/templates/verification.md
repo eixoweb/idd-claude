@@ -11,7 +11,7 @@ Verbatim from `verify-cli.mjs`.
 | --------- | ------ | ------ |
 | `runtime` | — | — |
 | `visual` | — | — |
-| `mutation` | — | `<score>` against threshold `<n>` |
+| `mutation` | — | `<score>` against threshold `<n>` — [annotated source](<htmlReport>) |
 | `acceptance` | — | — |
 
 <!-- A dimension the config disables does not appear. One that is enabled but

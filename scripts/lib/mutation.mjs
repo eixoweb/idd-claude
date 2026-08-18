@@ -62,3 +62,29 @@ export function chooseMutationScope(changedFiles, mutateGlobs) {
 
   return { mode: 'none', mutate: [] }
 }
+
+// Stryker's own defaults. html is on by default, json is not — and json is the
+// one the score is read from.
+const DEFAULT_REPORTS = {
+  json: 'reports/mutation/mutation.json',
+  html: 'reports/mutation/mutation.html',
+}
+
+/**
+ * Where this project's reports land. A project is free to move them; what it is
+ * not free to do is leave the json reporter off, because that is the file the
+ * score comes from — so the run forces both reporters on and reads the paths
+ * from here.
+ */
+export function reporterPaths(configSource) {
+  let config = {}
+  try {
+    config = JSON.parse(String(configSource)) ?? {}
+  } catch {
+    // A malformed config is Stryker's to complain about, not ours to crash on.
+  }
+  return {
+    json: config.jsonReporter?.fileName ?? DEFAULT_REPORTS.json,
+    html: config.htmlReporter?.fileName ?? DEFAULT_REPORTS.html,
+  }
+}

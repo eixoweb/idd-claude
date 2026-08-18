@@ -189,6 +189,17 @@ behaviour.
 Scoped to the change's own files via its derived base; a full run is
 prohibitive.
 
+The run forces the `json` and `html` reporters on. Stryker enables `html` by
+default and **not** `json` — which is the file the score is read from, so a
+project with a perfectly valid config and no json reporter used to get a silent
+`UNKNOWN` with nothing to explain it. A project that configured either reporter
+keeps its own paths.
+
+The html path travels back with the score and belongs in the verification
+report. A mutation score is a number nobody can act on; the annotated source
+behind it shows each surviving mutant on the line it survived, which is the list
+of tests that would not have caught the bug.
+
 ### acceptance
 
 cucumber-js over the Gherkin scenarios extracted from the specs. Only `passed`
