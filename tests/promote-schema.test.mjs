@@ -139,3 +139,24 @@ test('promoteSchema merges into a config written by openspec init', () => {
   assert.equal(config.schema, 'idd-claude')
   assert.equal(config.verification.runtime, true)
 })
+
+test('the default config wires the skills the plugin vendors', () => {
+  // The skills were vendored from intent-driven-template and the wiring that
+  // came with them was not: upstream declares it in openspec/config.yaml under
+  // rules, per artifact, and ours shipped `rules: {}`. Eight orphans.
+  const config = parse(defaultConfig())
+  assert.deepEqual(config.rules.proposal, ['Must use grill-me skill'])
+  assert.deepEqual(config.rules.design, ['Must use c4-diagrams skill'])
+  assert.deepEqual(config.rules.adr, ['Must use architectural-decision-records skill'])
+  assert.deepEqual(config.rules.tasks, ['Must use visual-verification skill'])
+})
+
+test('the opt-in skills stay commented, so turning one on is a choice', () => {
+  // spec-as-source and glossary are off by default upstream and here. Present as
+  // commented lines rather than absent: a project should not have to read the
+  // plugin to discover what it could switch on.
+  const source = defaultConfig()
+  assert.match(source, /#\s*- Must use spec-as-source skill/)
+  assert.match(source, /#\s*- Must use glossary skill/)
+  assert.equal(parse(source).rules.specs, null, 'specs must carry no active rule')
+})

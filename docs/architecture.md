@@ -159,6 +159,15 @@ Eight skills come from intent-driven-template's `.agents/skills/`. Their
 frontmatter was already in Claude Code's format; only paths changed.
 `skills-lock.json` pins `grill-me`, itself vendored from mattpocock.
 
+**The wiring was vendored a version late.** Upstream declares which skill applies
+to which artifact in `openspec/config.yaml` under `rules:`; this plugin shipped
+`rules: {}` for several versions, leaving eight skills present and reachable by
+nothing. A vendored skill nothing reaches is not clutter — it is a capability
+that silently never happens, the same defect as a config key that does nothing.
+`tests/skills-conformance.test.mjs` now fails if a skill is neither named in the
+config template, nor in `init.md`, nor pulled by another skill — and it verifies
+that last claim rather than trusting the list.
+
 `tests/skills-conformance.test.mjs` asserts every skill's frontmatter `name`
 matches its directory and that no OpenCode path survives.
 

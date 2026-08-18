@@ -27,7 +27,20 @@ project:
   dev_stack_url: ""        # required when visual: true, e.g. http://localhost:5173
   test_commands: []
 
-rules: {}
+rules:
+  proposal:
+    - Must use grill-me skill
+    # - Must use glossary skill
+  design:
+    - Must use c4-diagrams skill
+    # - Must use glossary skill
+  adr:
+    - Must use architectural-decision-records skill
+  specs:
+    # - Must use spec-as-source skill
+  tasks:
+    - Must use visual-verification skill
+    # - Must use spec-as-source skill
 `
 
 const SCHEMA_LINE = /^schema:[ \t]*(\S+)[ \t]*$/m

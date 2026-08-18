@@ -108,12 +108,50 @@ group BLOCK.
 ## `rules`
 
 Free-text project rules, appended by OpenSpec to the generation prompt of the
-matching artifact. An upstream mechanism, unchanged.
+matching artifact. An upstream mechanism, unchanged — **and the way the plugin's
+skills are wired.**
+
+`/idd:init` writes these defaults, mirroring intent-driven-template's own:
 
 ```yaml
 rules:
+  proposal:
+    - Must use grill-me skill
+    # - Must use glossary skill
   design:
     - Must use c4-diagrams skill
+    # - Must use glossary skill
+  adr:
+    - Must use architectural-decision-records skill
+  specs:
+    # - Must use spec-as-source skill
+  tasks:
+    - Must use visual-verification skill
+    # - Must use spec-as-source skill
+```
+
+Why here rather than inside the commands: a rule in your config is yours to
+delete. A skill named inside the plugin's prompts is not, and every project gets
+it whether it fits or not.
+
+`grill-me` on the proposal is the intent challenge — it interviews you until the
+decision tree is resolved, before the proposal is written. It costs your
+attention rather than tokens, which is what makes it affordable where an
+adversarial subagent pair was not.
+
+Commented lines are opt-ins, listed rather than omitted so you can see what is
+available without reading the plugin. `spec-as-source` also pulls
+`gherkin-authoring` and `acceptance-test-authoring`: skills reference each other,
+so turning on the first is enough.
+
+`openspec-git-discipline` is the exception. It governs the workflow rather than
+one artifact, so `/idd:init` writes it as a line in `AGENTS.md` — again as
+upstream does.
+
+Your own rules go alongside them:
+
+```yaml
+rules:
   specs:
     - All API endpoints SHALL document authentication requirements.
   tasks:

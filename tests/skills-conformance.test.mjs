@@ -4,6 +4,7 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parseFrontmatter } from '../scripts/lib/frontmatter.mjs'
+import { defaultConfig } from '../scripts/lib/promote-schema.mjs'
 
 const skillsRoot = fileURLToPath(new URL('../skills/', import.meta.url))
 const skillDirs = readdirSync(skillsRoot, { withFileTypes: true })
@@ -51,3 +52,28 @@ test('no skill references an OpenCode path', () => {
 })
 
 const agentsRoot = fileURLToPath(new URL('../agents/', import.meta.url))
+
+// A vendored skill nothing reaches is not clutter, it is a capability that
+// silently never happens — the same defect as a config key that does nothing.
+const PULLED_BY_ANOTHER_SKILL = ['gherkin-authoring', 'acceptance-test-authoring']
+
+test('every vendored skill is reachable by something', () => {
+  const config = defaultConfig()
+  const init = readFileSync(new URL('../commands/init.md', import.meta.url), 'utf8')
+
+  for (const dir of skillDirs) {
+    const reachable =
+      config.includes(dir) || init.includes(dir) || PULLED_BY_ANOTHER_SKILL.includes(dir)
+    assert.ok(reachable, `${dir} is vendored but no rule, command or skill reaches it`)
+  }
+})
+
+test('a skill claimed as pulled is really named by another skill', () => {
+  // Otherwise the list above becomes the place drift hides.
+  for (const dir of PULLED_BY_ANOTHER_SKILL) {
+    const named = skillDirs
+      .filter((other) => other !== dir)
+      .some((other) => readFileSync(join(skillsRoot, other, 'SKILL.md'), 'utf8').includes(dir))
+    assert.ok(named, `${dir} is listed as pulled but no other skill names it`)
+  }
+})

@@ -35,8 +35,17 @@ Set up this project for the idd-claude workflow.
    A worktree is a git repository inside the project. Left untracked, a `git
    add -A` commits it as an embedded repo — a confusing state that clones will
    not carry. `.superpowers/` holds brainstorm mockups, which are scratch.
-   `.evaluator-input.json` is the evaluator's dispatch payload, rewritten
-   before every round.
+
+5. Add this line to `AGENTS.md`, creating the file if it does not exist:
+
+   ```
+   - For OpenSpec propose/apply/verify/archive workflows, use the local `openspec-git-discipline` skill to enforce proposal commits before apply and merge-before-archive discipline.
+   ```
+
+   It governs the workflow rather than one artifact, so it does not belong in
+   the per-artifact `rules:` of `config.yaml` — this is where upstream puts it
+   too. The other vendored skills are wired there instead, and `/idd:init`
+   writes them with the config.
 
 Never edit files under `openspec/schemas/idd-claude/` in a target project:
 they are a copy, and the next promotion overwrites them.

@@ -117,3 +117,11 @@ test('the plugin name is the command namespace the docs promise', () => {
   )
   assert.ok(market.plugins.some((p) => p.name === 'idd'))
 })
+
+test('init wires the git discipline skill the way upstream does', () => {
+  // Upstream reaches it through a one-line AGENTS.md instruction, not through
+  // config rules — it governs the workflow, not one artifact.
+  const init = read('init.md')
+  assert.match(init, /AGENTS\.md/)
+  assert.match(init, /openspec-git-discipline/)
+})
