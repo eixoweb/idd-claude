@@ -8,7 +8,7 @@ For anyone modifying the plugin. If you only want to *use* it, read
 ```
 idd-claude/
 ├── .claude-plugin/          plugin.json (version drives drift detection), marketplace.json
-├── commands/idd/            explore, propose, apply, verify, archive, init
+├── commands/               explore, propose, apply, verify, archive, init
 ├── agents/                  evaluator, adversarial-author, adversarial-reviewer
 ├── skills/                  10 skills — 9 ported from upstream, plus visual-verification
 ├── schema/                  the full OpenSpec schema + templates
@@ -16,9 +16,32 @@ idd-claude/
 ├── scripts/
 │   ├── lib/                 all the logic, unit-tested
 │   └── *-cli.mjs            thin shells that spawn external tools
-├── tests/                   18 files, 123 tests
+├── tests/                   18 files, 171 tests
 └── docs/superpowers/        design specs and implementation plans (French)
 ```
+
+## Three names, on purpose
+
+| Thing | Name | Why |
+| --- | --- | --- |
+| repository & marketplace | `idd-claude` | what the project is |
+| plugin | `idd` | commands are namespaced by plugin name, so this is what makes them `/idd:apply` |
+| OpenSpec schemas | `idd-claude`, `idd-claude-lite` | independent of the plugin; they live in the target project |
+
+Commands must also sit **directly** in `commands/`, never in a subdirectory:
+a nested one is not scanned, and the commands silently do not exist on an
+installed plugin. `tests/commands-contract.test.mjs` asserts both the flat
+layout and the plugin name, because nothing else in the suite could see the
+difference — every other test reads the files by path.
+
+Verify packaging without publishing:
+
+```bash
+claude --plugin-dir . plugin details idd
+```
+
+It should report 16 skills — ten real skills plus the six commands, which that
+inventory labels as skills too.
 
 ## The one structural rule
 
@@ -119,12 +142,12 @@ happened for one reason: Stryker drives vitest natively and cannot drive
 `node --test`.
 
 ```bash
-npm test                          # 123 tests, ~2s
+npm test                          # 171 tests, ~2s
 ./node_modules/.bin/stryker run   # mutation score, ~20s
 ```
 
-Current mutation score: **78.54%**, no file below 70. The weakest is
-`visual.mjs` at 71.4 with 46 survivors — the next worthwhile target. Open
+Current mutation score: **81%**, no file below 70. The weakest are
+`frontmatter.mjs` and `tasks.mjs` at 72 — the next worthwhile targets. Open
 `reports/mutation/index.html` after a run to see annotated source.
 
 ## Adding a dimension
@@ -136,7 +159,7 @@ Current mutation score: **78.54%**, no file below 70. The weakest is
 3. Write the shell in `scripts/`, which must catch tool failure and emit
    `UNKNOWN` rather than 0.
 4. Add a step to `agents/evaluator.md` pointing at the shell, and a
-   pre-flight check in `commands/idd/apply.md` that refuses to start when the
+   pre-flight check in `commands/apply.md` that refuses to start when the
    dimension is enabled but unevaluable.
 5. Add the key to `defaultConfig()` and to the verification templates.
 
