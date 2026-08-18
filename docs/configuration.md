@@ -96,8 +96,12 @@ and reports to the user. `BLOCK` verdicts do not count toward it.
 
 ### `evaluator_model`
 
-`haiku`, `sonnet` (default) or `opus`. Sonnet is the default deliberately:
-economising on the step that exists to be a safeguard is the wrong trade.
+`haiku`, `sonnet` (default) or `opus`. Read by `/idd:apply` and passed to the
+evaluator at dispatch, overriding the model in the agent's own frontmatter.
+
+Sonnet is the default deliberately: economising on the step that exists to be a
+safeguard is the wrong trade. Raise it to `opus` on a codebase where a missed
+finding is expensive.
 
 ## `project`
 

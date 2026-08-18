@@ -19,6 +19,12 @@ test('the evaluator agent exists with Claude Code frontmatter', () => {
   assert.ok(['haiku', 'sonnet', 'opus'].includes(frontmatter.model))
 })
 
+test('the evaluator works from the dispatch rather than fetching its inputs', () => {
+  const body = readFileSync(agentPath, 'utf8').replace(/\s+/g, ' ')
+  assert.match(body, /Everything you need is in the dispatch/)
+  assert.match(body, /Work from what you were given/)
+})
+
 test('the evaluator prompt encodes the design rules', () => {
   const body = readFileSync(agentPath, 'utf8')
   assert.match(body, /requesting-code-review/, 'it must run the code review itself')
