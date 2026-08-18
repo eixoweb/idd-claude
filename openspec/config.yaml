@@ -44,7 +44,7 @@ project:
 
 rules:
   proposal:
-    - Must use grill-me skill
+    - Must use grilling skill
     # - Must use glossary skill
   design:
     - Must use c4-diagrams skill

@@ -116,7 +116,7 @@ skills are wired.**
 ```yaml
 rules:
   proposal:
-    - Must use grill-me skill
+    - Must use grilling skill
     # - Must use glossary skill
   design:
     - Must use c4-diagrams skill
@@ -134,10 +134,16 @@ Why here rather than inside the commands: a rule in your config is yours to
 delete. A skill named inside the plugin's prompts is not, and every project gets
 it whether it fits or not.
 
-`grill-me` on the proposal is the intent challenge — it interviews you until the
-decision tree is resolved, before the proposal is written. It costs your
+`grilling` on the proposal is the intent challenge — it maps the design tree and
+works it in rounds, asking the whole settled frontier at once with a recommended
+answer per question, until nothing is left silently assumed. It costs your
 attention rather than tokens, which is what makes it affordable where an
 adversarial subagent pair was not.
+
+`grill-me` is its trigger alias, vendored alongside it: upstream marks it
+`disable-model-invocation: true`, so it is a phrase **you** type rather than
+something the model fires. That is why the rule names `grilling` — routing a
+model through a shim it may not invoke is a wiring that fails silently.
 
 Commented lines are opt-ins, listed rather than omitted so you can see what is
 available without reading the plugin. `spec-as-source` also pulls

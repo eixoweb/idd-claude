@@ -9,13 +9,13 @@ For anyone modifying the plugin. If you only want to *use* it, read
 idd-claude/
 ├── .claude-plugin/          plugin.json (version drives drift detection), marketplace.json
 ├── commands/               explore, propose, apply, verify, archive, init
-├── skills/                  9 skills — 8 ported from upstream, plus visual-verification
+├── skills/                  10 skills — 8 from intent-driven-template, 2 from mattpocock, plus visual-verification
 ├── schema/                  the full OpenSpec schema + templates
 ├── schema-lite/             the bounded schema + templates
 ├── scripts/
 │   ├── lib/                 all the logic, unit-tested
 │   └── *-cli.mjs            thin shells that spawn external tools
-├── tests/                   23 files, 214 tests
+├── tests/                   24 files, 222 tests
 └── docs/superpowers/        design specs and implementation plans (French)
 ```
 
@@ -39,7 +39,7 @@ Verify packaging without publishing:
 claude --plugin-dir . plugin details idd
 ```
 
-It should report 15 skills — nine real skills plus the six commands, which that
+It should report 16 skills — ten real skills plus the six commands, which that
 inventory labels as skills too. There are no agents: the workflow delegates its
 one independent opinion to `superpowers:requesting-code-review` rather than
 shipping a reviewer of its own.
@@ -157,7 +157,20 @@ identical either way.
 
 Eight skills come from intent-driven-template's `.agents/skills/`. Their
 frontmatter was already in Claude Code's format; only paths changed.
-`skills-lock.json` pins `grill-me`, itself vendored from mattpocock.
+
+`grill-me` and `grilling` come straight from mattpocock/skills, pinned in
+`skills-lock.json` by commit and sha256. They were re-fetched because what this
+plugin shipped was a *fork of a fork*: byte-identical to intent-driven-template's
+copy, which had itself vendored an older mattpocock revision. Upstream has since
+split the skill in two — `grill-me` became a trigger shim carrying
+`disable-model-invocation: true`, and `grilling` holds the content, now a
+design-tree-in-rounds interview rather than the earlier one-question-at-a-time
+loop.
+
+The inherited lock claimed a hash matching neither the file shipped nor anything
+upstream, and nothing read it. `tests/skills-lock.test.mjs` now recomputes the
+sha256 of every locked skill and requires a full commit sha, so re-fetching
+means re-fetching a known revision rather than whatever `main` holds that day.
 
 **The wiring was vendored a version late.** Upstream declares which skill applies
 to which artifact in `openspec/config.yaml` under `rules:`; this plugin shipped
@@ -191,7 +204,7 @@ happened for one reason: Stryker drives vitest natively and cannot drive
 `node --test`.
 
 ```bash
-npm test                          # 214 tests, ~2s
+npm test                          # 222 tests, ~2s
 ./node_modules/.bin/stryker run   # mutation score, ~20s
 ```
 

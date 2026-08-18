@@ -18,6 +18,7 @@ const EXPECTED = [
   'gherkin-authoring',
   'glossary',
   'grill-me',
+  'grilling',
   'openspec-git-discipline',
   'spec-as-source',
   'visual-verification',
@@ -57,13 +58,21 @@ const agentsRoot = fileURLToPath(new URL('../agents/', import.meta.url))
 // silently never happens — the same defect as a config key that does nothing.
 const PULLED_BY_ANOTHER_SKILL = ['gherkin-authoring', 'acceptance-test-authoring']
 
+// grill-me carries `disable-model-invocation: true` upstream: it is a phrase the
+// user types, which then calls `grilling`. The config rule names `grilling`
+// directly rather than routing a model through a shim it may not invoke.
+const USER_INVOKED_ONLY = ['grill-me']
+
 test('every vendored skill is reachable by something', () => {
   const config = defaultConfig()
   const init = readFileSync(new URL('../commands/init.md', import.meta.url), 'utf8')
 
   for (const dir of skillDirs) {
     const reachable =
-      config.includes(dir) || init.includes(dir) || PULLED_BY_ANOTHER_SKILL.includes(dir)
+      config.includes(dir) ||
+      init.includes(dir) ||
+      PULLED_BY_ANOTHER_SKILL.includes(dir) ||
+      USER_INVOKED_ONLY.includes(dir)
     assert.ok(reachable, `${dir} is vendored but no rule, command or skill reaches it`)
   }
 })
@@ -75,5 +84,13 @@ test('a skill claimed as pulled is really named by another skill', () => {
       .filter((other) => other !== dir)
       .some((other) => readFileSync(join(skillsRoot, other, 'SKILL.md'), 'utf8').includes(dir))
     assert.ok(named, `${dir} is listed as pulled but no other skill names it`)
+  }
+})
+
+test('a skill listed as user-invoked really forbids model invocation', () => {
+  // Otherwise the list becomes a way to excuse an orphan.
+  for (const dir of USER_INVOKED_ONLY) {
+    const body = readFileSync(join(skillsRoot, dir, 'SKILL.md'), 'utf8')
+    assert.match(body, /disable-model-invocation:\s*true/, `${dir} is invocable; wire it instead`)
   }
 })

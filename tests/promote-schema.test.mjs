@@ -145,7 +145,10 @@ test('the default config wires the skills the plugin vendors', () => {
   // came with them was not: upstream declares it in openspec/config.yaml under
   // rules, per artifact, and ours shipped `rules: {}`. Eight orphans.
   const config = parse(defaultConfig())
-  assert.deepEqual(config.rules.proposal, ['Must use grill-me skill'])
+  // `grilling` and not `grill-me`: upstream's grill-me is a shim carrying
+  // disable-model-invocation, meant for a user to type. The rule names the
+  // skill that holds the content.
+  assert.deepEqual(config.rules.proposal, ['Must use grilling skill'])
   assert.deepEqual(config.rules.design, ['Must use c4-diagrams skill'])
   assert.deepEqual(config.rules.adr, ['Must use architectural-decision-records skill'])
   assert.deepEqual(config.rules.tasks, ['Must use visual-verification skill'])
