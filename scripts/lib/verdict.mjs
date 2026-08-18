@@ -39,3 +39,28 @@ export function applicableDimensions(enabled, group) {
     return required === undefined || present.has(required)
   })
 }
+
+// Applicability tells us a group without a VISUAL task has no visual claim to
+// check. It cannot tell us whether it *should* have had one. This closes that
+// half: if the group changed a template or a stylesheet and declared no visual
+// assertion, say so.
+//
+// It warns rather than fails on purpose. A stylesheet touched for a lint fix
+// has no visual consequence, and a gate that cannot tell the difference would
+// be dodged by whoever it inconveniences. Detection, then a human decides.
+export const VIEW_PATTERNS = [
+  '.html', '.htm', '.css', '.scss', '.sass', '.less', '.styl',
+  '.vue', '.svelte', '.jsx', '.tsx', '.twig', '.erb', '.blade.php',
+]
+
+export function visualCoverageWarning({ changedFiles, group, patterns = VIEW_PATTERNS }) {
+  const declaresVisual = (group?.tasks ?? []).some((task) => task.type === 'VISUAL')
+  if (declaresVisual) return null
+
+  const viewFiles = (changedFiles ?? []).filter((file) =>
+    patterns.some((pattern) => String(file).toLowerCase().endsWith(pattern)),
+  )
+  if (viewFiles.length === 0) return null
+
+  return `group ${group?.number ?? '?'} changed ${viewFiles.join(', ')} but declares no VISUAL task — the visual gate did not run on this group`
+}

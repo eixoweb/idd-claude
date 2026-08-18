@@ -76,13 +76,18 @@ for the group. Nothing else is available to you, and you must not go looking.
 
 10. **Compute the verdict — do not decide it yourself.** Run:
 
-    `node "${CLAUDE_PLUGIN_ROOT}/scripts/verdict-cli.mjs" openspec/config.yaml '<scores as JSON>' openspec/changes/<id>/tasks.md <group number>`
+    `node "${CLAUDE_PLUGIN_ROOT}/scripts/verdict-cli.mjs" openspec/config.yaml '<scores as JSON>' openspec/changes/<id>/tasks.md <group number> '<changed files as JSON array>'`
 
     Passing the tasks file and the group number lets it work out which
     dimensions this group can actually exercise, from the artifact rather than
     from your say-so. Omit a score for any dimension it will rule out; use
     `"UNKNOWN"` for one that applies but could not be evaluated. Report the
     status it returns, verbatim, and the `applicable` list alongside it.
+
+    Report any `warnings` it returns as findings in their own right. A group
+    that changed a template or a stylesheet and declared no VISUAL task went
+    through no visual gate at all — that is worth saying even when the verdict
+    is PASS.
 
 ## Output
 

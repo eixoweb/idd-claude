@@ -92,11 +92,30 @@ The derivation matters more than the rule. A sentinel the evaluator could emit
 the gate. Reading the artifact is not something a model can talk its way
 around.
 
-**Known limitation.** Nothing yet forces a group that touches the interface to
-carry a `VISUAL` task. The gate is therefore only as strong as the diligence of
-whoever writes `tasks.md`. Deriving *expected* applicability from the changed
-file types — a diff touching templates or stylesheets ought to require a
-`VISUAL` task — would close it, and is not implemented.
+### The other half: should it have had one?
+
+Applicability says a group without a `VISUAL` task has no visual claim to
+check. It cannot say whether it *should* have had one — which would leave the
+gate as strong as the diligence of whoever writes `tasks.md`.
+
+So `verdict-cli` also takes the group's changed files and reports a warning
+when the group touched a template or stylesheet and declared no visual
+assertion:
+
+```
+group 3 changed styles/main.css but declares no VISUAL task
+  — the visual gate did not run on this group
+```
+
+It **warns rather than fails**, deliberately. A stylesheet touched for a lint
+fix has no visual consequence, and a gate that cannot tell the difference gets
+routed around by whoever it inconveniences. Detection is deterministic; the
+judgement stays human. The evaluator reports the warning as a finding even when
+the verdict is `PASS`.
+
+The extensions are the usual template and style ones — `.html`, `.css`,
+`.scss`, `.vue`, `.jsx`, `.tsx`, `.svelte`, `.twig`, `.erb`, `.blade.php` —
+and are overridable.
 
 ## The verdict is computed outside the model
 
