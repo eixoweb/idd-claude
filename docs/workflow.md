@@ -85,8 +85,10 @@ ordinal — never on the ordinal itself.
 ```
 
 The `REFACTOR` rule is checkable: **its diff must not modify a single test
-assertion.** If it does, behaviour changed under cover of cleanup, and the
-evaluator caps the `spec` dimension at 50.
+assertion.** If it does, the evaluator treats it as CRITICAL and returns
+`BLOCK` — weakening an assertion under cover of cleanup makes the suite agree
+with whatever the code now does, which is an integrity problem rather than a
+score.
 
 ## What forces TDD
 

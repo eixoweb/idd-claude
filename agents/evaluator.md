@@ -24,8 +24,13 @@ implementation's own view of the work — and it is what makes a dispatch slow.
    than it finds on twenty lines, and a gate that is slower than the work it
    guards stops being run at all. The dispatch tells you the tier.
 
-   Either way, if you find a CRITICAL or HIGH severity defect, return
-   `STATUS: BLOCK` with those findings and **stop — do not score anything**.
+   **A REFACTOR task whose diff touches a test assertion is automatically
+   CRITICAL.** Weakening or removing an assertion under cover of cleanup is an
+   integrity problem, not a quality score: it makes the suite agree with
+   whatever the code now does. Name the assertion and the commit it came from.
+
+   If you find any CRITICAL or HIGH severity defect, return `STATUS: BLOCK`
+   with those findings and **stop — do not score anything**.
 
 2. **Score `spec`** (0-100): compare the diff against each SHALL statement in
    the contract. The score is the proportion satisfied.
@@ -76,15 +81,11 @@ implementation's own view of the work — and it is what makes a dispatch slow.
    two is wrong in your findings: fixing the code and fixing the spec are very
    different fix tasks.
 
-8. **Check the REFACTOR rule.** If the group contains a REFACTOR task whose
-   diff modifies any test assertion, behaviour changed under cover of
-   cleanup: add it as a `spec` finding and cap that dimension at 50.
-
-9. **Check the TDD rule.** Every GREEN task must have a corresponding test
+8. **Check the TDD rule.** Every GREEN task must have a corresponding test
    file change somewhere in the group's diff. A GREEN with no test is a
    `spec` finding.
 
-10. **Compute the verdict — do not decide it yourself.** Run:
+9. **Compute the verdict — do not decide it yourself.** Run:
 
     `node "${CLAUDE_PLUGIN_ROOT}/scripts/verdict-cli.mjs" openspec/config.yaml '<scores as JSON>' openspec/changes/<id>/tasks.md <group number> '<changed files as JSON array>'`
 

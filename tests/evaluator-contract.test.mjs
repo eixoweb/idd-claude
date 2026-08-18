@@ -64,6 +64,15 @@ test('verdict-cli BLOCKS when an enabled dimension was not scored', () => {
   assert.equal(JSON.parse(out).status, 'BLOCK')
 })
 
+test('a REFACTOR touching a test assertion blocks rather than scores', () => {
+  // It used to cap the spec dimension at 50 — a rule that could never fire,
+  // because the review catches it as CRITICAL first and BLOCK stops before any
+  // scoring. Two mechanisms for one defect, and the blocking one is right.
+  const body = readFileSync(agentPath, 'utf8').replace(/\s+/g, ' ')
+  assert.match(body, /REFACTOR task whose diff touches a test assertion is automatically CRITICAL/)
+  assert.doesNotMatch(body, /cap that dimension at 50/)
+})
+
 test('the evaluator probes the page through the CLI rather than by eye', () => {
   const body = readFileSync(agentPath, 'utf8')
   assert.match(body, /visual-cli\.mjs/)
