@@ -72,3 +72,11 @@ test('both schemas replaced the upstream apply instruction', () => {
     assert.match(schema.apply.instruction, /idd:apply/, `${dir}: apply must point at the command`)
   }
 })
+
+test('a fix round is incremental, not a fresh evaluation', () => {
+  assert.match(applyFlat, /A fix round is not a fresh evaluation/)
+  assert.match(applyFlat, /the \*\*fix diff\*\*, not the whole group diff/)
+  assert.match(applyFlat, /carried, not re-measured/)
+  // runtime is what makes the skips safe rather than optimistic.
+  assert.match(applyFlat, /always re-runs.*catches damage anywhere/)
+})

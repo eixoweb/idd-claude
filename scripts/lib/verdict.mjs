@@ -1,3 +1,5 @@
+import { chooseMutationScope } from './mutation.mjs'
+
 export const UNKNOWN = 'UNKNOWN'
 
 export function computeVerdict({ scores, floors, enabled }) {
@@ -63,4 +65,38 @@ export function visualCoverageWarning({ changedFiles, group, patterns = VIEW_PAT
   if (viewFiles.length === 0) return null
 
   return `group ${group?.number ?? '?'} changed ${viewFiles.join(', ')} but declares no VISUAL task — the visual gate did not run on this group`
+}
+
+// After a fix, most of a group is provably untouched. Re-running everything is
+// waste; re-running nothing is trust. The split is by cost and reach.
+//
+// Cheap and global always re-runs: `runtime` is seconds and catches collateral
+// damage anywhere, which is what makes the scoped skips below safe. `spec` and
+// `code` are re-judged against the fix diff itself, not the whole group.
+//
+// Expensive and local re-runs only when the fix could have reached it, derived
+// from the files the fix touched — not from the implementation's account of
+// what it changed.
+const ALWAYS_RECHECK = ['spec', 'runtime', 'code']
+
+export function dimensionsToRecheck(
+  fixedFiles,
+  { enabled, mutateGlobs = [], viewPatterns = VIEW_PATTERNS },
+) {
+  const files = (fixedFiles ?? []).map(String)
+  const again = enabled.filter((d) => ALWAYS_RECHECK.includes(d))
+
+  const touched = (patterns) =>
+    files.some((file) => patterns.some((p) => file.toLowerCase().endsWith(p)))
+
+  if (enabled.includes('visual') && touched(viewPatterns)) again.push('visual')
+
+  if (enabled.includes('mutation')) {
+    const { mode } = chooseMutationScope(files, mutateGlobs)
+    if (mode !== 'none') again.push('mutation')
+  }
+
+  if (enabled.includes('acceptance') && files.length > 0) again.push('acceptance')
+
+  return again
 }

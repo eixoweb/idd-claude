@@ -150,3 +150,47 @@ test('verdict-cli warns when a group changed view files without a VISUAL task', 
   assert.match(verdict.warnings[0], /main\.css/)
   assert.match(verdict.warnings[0], /no VISUAL task/)
 })
+
+test('verdict-cli says which dimensions a fix could have reached', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'idd-verdict-'))
+  const configPath = join(dir, 'config.yaml')
+  const tasksPath = join(dir, 'tasks.md')
+  writeFileSync(configPath, 'verification:\n  visual: true\n', 'utf8')
+  writeFileSync(tasksPath, '## 1. G\n- [ ] 1.1 VISUAL x\n      url: /\n      count .a  1\n', 'utf8')
+
+  const run = (fixed) =>
+    JSON.parse(
+      execFileSync(
+        'node',
+        [
+          cli,
+          configPath,
+          JSON.stringify({ spec: 90, runtime: 100, code: 80, visual: 100 }),
+          tasksPath,
+          '1',
+          JSON.stringify(['index.html']),
+          JSON.stringify(fixed),
+        ],
+        { encoding: 'utf8' },
+      ),
+    )
+
+  // A fix confined to a test file cannot change what the browser renders.
+  const testOnly = run(['tests/a.test.mjs'])
+  assert.ok(!testOnly.recheck.includes('visual'))
+  assert.ok(testOnly.recheck.includes('runtime'), 'the cheap safety net always re-runs')
+
+  assert.ok(run(['index.html']).recheck.includes('visual'))
+})
+
+test('verdict-cli omits recheck when no fix files are given', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'idd-verdict-'))
+  const configPath = join(dir, 'config.yaml')
+  writeFileSync(configPath, 'verification: {}\n', 'utf8')
+  const out = JSON.parse(
+    execFileSync('node', [cli, configPath, JSON.stringify({ spec: 90, runtime: 100, code: 80 })], {
+      encoding: 'utf8',
+    }),
+  )
+  assert.equal(out.recheck, undefined)
+})

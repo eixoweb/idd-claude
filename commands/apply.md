@@ -133,10 +133,35 @@ Then act on the verdict:
 
 - `PASS` → done, or next group.
 - `RETRY` → append the fix tasks it generated to `tasks.md` and work them, then
-  re-dispatch. Stop at `verification.max_iterations` and report to the user.
+  re-dispatch **incrementally**. Stop at `verification.max_iterations` and
+  report to the user.
 - `BLOCK` → fix the reported CRITICAL/HIGH findings, or the infrastructure
   problem, before re-dispatching. Do not count a BLOCK as an iteration of the
   RETRY loop: it is not a code-quality failure.
+
+### Re-dispatching after a fix
+
+A fix round is not a fresh evaluation. Most of the group is provably untouched,
+and re-running everything is what makes a gate too slow to keep using.
+
+Ask which dimensions the fix could have reached — do not decide it yourself:
+
+```
+node "${CLAUDE_PLUGIN_ROOT}/scripts/verdict-cli.mjs" openspec/config.yaml \
+  '<scores so far>' openspec/changes/<id>/tasks.md <group> \
+  '<group changed files>' '<files the fix touched>'
+```
+
+It returns a `recheck` list. Dispatch the evaluator with:
+
+- the findings it must re-verify — always, that is the point of the round;
+- the **fix diff**, not the whole group diff, for the review;
+- only the dimensions in `recheck`. Carry the others forward at their previous
+  scores, and say in the report that they were carried, not re-measured.
+
+`runtime` is always in the list and always re-runs. It costs seconds and
+catches damage anywhere, which is what makes skipping the expensive local
+dimensions safe rather than optimistic.
 
 Record each round in `verification.md`.
 
