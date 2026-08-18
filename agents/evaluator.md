@@ -12,9 +12,15 @@ Everything you need is in the dispatch: the group's contract and its tasks, the
 change's specs, the diff, the changed files, the assertion lines of each VISUAL
 task, the base ref and the dev stack URL. Work from what you were given.
 
-Read a file only to resolve something the dispatch left genuinely ambiguous,
-and say so when you do. Going looking is how an evaluator drifts back into the
-implementation's own view of the work — and it is what makes a dispatch slow.
+It is given **by reference**: the dispatch names a `payload` path, one JSON file
+holding all of the above, and carries only a summary card itself. Read that file
+first. Opening it is not going looking — it is your dispatch, handed over that
+way because reciting it into the prompt would cost more than the review does.
+
+Beyond that file, read a source file only to resolve something it left
+genuinely ambiguous, and say so when you do. Going looking is how an evaluator
+drifts back into the implementation's own view of the work — and it is what
+makes a dispatch slow.
 
 ## Sequence
 
@@ -49,7 +55,10 @@ implementation's own view of the work — and it is what makes a dispatch slow.
    **re-run** its assertions yourself — never read the result the
    implementation session claimed. For each task, pass its assertion lines to:
 
-   `node "${CLAUDE_PLUGIN_ROOT}/scripts/visual-cli.mjs" '<lines as JSON array>' <baseUrl>`
+   `node "${CLAUDE_PLUGIN_ROOT}/scripts/visual-cli.mjs" '<lines as JSON array>' <devStackUrl>`
+
+   `devStackUrl` is in the dispatch. It is not yours to guess: an assertion
+   measured against the wrong origin is worse than one not measured at all.
 
    The dimension's score is the mean of the per-task scores. If any invocation
    returns `"UNKNOWN"`, report `"UNKNOWN"` for the whole dimension — not 0. A

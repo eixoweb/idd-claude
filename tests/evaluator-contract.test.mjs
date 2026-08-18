@@ -204,3 +204,19 @@ test('verdict-cli omits recheck when no fix files are given', () => {
   )
   assert.equal(out.recheck, undefined)
 })
+
+test('the evaluator is handed the dev stack URL it is promised', () => {
+  const body = readFileSync(agentPath, 'utf8')
+  // Its charter already said the dispatch carries the dev stack URL. The
+  // dispatch did not, so the placeholder `<baseUrl>` was filled in by guesswork.
+  assert.match(body, /devStackUrl/)
+  assert.doesNotMatch(body, /<baseUrl>/)
+})
+
+test('the evaluator opens the one file it is handed', () => {
+  // Reading a payload prepared for it is not "going looking": the charter bans
+  // hunting through the codebase, not opening its own inputs.
+  const body = readFileSync(agentPath, 'utf8')
+  assert.match(body, /payload/i)
+  assert.match(body, /not .*going looking|is not going looking|does not count as going looking/i)
+})

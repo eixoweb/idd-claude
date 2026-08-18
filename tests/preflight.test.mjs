@@ -3,9 +3,10 @@ import assert from 'node:assert/strict'
 import { preflight } from '../scripts/lib/preflight.mjs'
 
 const base = {
-  config: 'verification:\n  visual: true\nproject:\n  dev_stack_command: "x"\n  test_commands: ["npm test"]\n',
+  config:
+    'verification:\n  visual: true\nproject:\n  dev_stack_command: "x"\n  dev_stack_url: "http://localhost:3000"\n  test_commands: ["npm test"]\n',
   schema: 'idd-claude-lite',
-  tools: { devBrowser: true, stryker: true, cucumber: true, acceptanceDir: true },
+  tools: { devBrowser: true, stryker: true, cucumber: true, acceptanceDir: true, devStackListening: false },
 }
 
 test('a satisfied project passes with nothing to refuse', () => {
@@ -78,4 +79,39 @@ test('an unknown schema is a refusal rather than a guessed tier', () => {
   const r = preflight({ ...base, schema: 'spec-driven' })
   assert.equal(r.ok, false)
   assert.match(r.refusals.join(' '), /spec-driven/)
+})
+
+test('visual without a dev stack url refuses rather than letting the URL be guessed', () => {
+  // The evaluator's charter promises it is given the dev stack URL. Nothing
+  // produced one, so every run invented it from the command string — the exact
+  // class of guess the preflight exists to remove.
+  const r = preflight({
+    ...base,
+    config: 'verification:\n  visual: true\nproject:\n  dev_stack_command: "x"\n  test_commands: ["t"]\n',
+  })
+  assert.equal(r.ok, false)
+  assert.match(r.refusals.join(' '), /dev_stack_url/)
+})
+
+test('the preflight hands back the dev stack, so no one has to reconstruct it', () => {
+  const r = preflight(base)
+  assert.equal(r.devStack.command, 'x')
+  assert.equal(r.devStack.url, 'http://localhost:3000')
+})
+
+test('the preflight says whether the stack is already up, so a run does not probe it again', () => {
+  assert.equal(preflight(base).devStack.listening, false)
+  assert.equal(
+    preflight({ ...base, tools: { ...base.tools, devStackListening: true } }).devStack.listening,
+    true,
+  )
+})
+
+test('visual off means there is no dev stack to report', () => {
+  const r = preflight({
+    ...base,
+    config: 'verification:\n  visual: false\nproject:\n  test_commands: ["t"]\n',
+  })
+  assert.equal(r.ok, true)
+  assert.equal(r.devStack, null)
 })

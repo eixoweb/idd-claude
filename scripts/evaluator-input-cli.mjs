@@ -1,10 +1,16 @@
 #!/usr/bin/env node
 import { execFileSync } from 'node:child_process'
-import { existsSync, readFileSync, readdirSync } from 'node:fs'
-import { join, relative } from 'node:path'
+import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
+import { join, relative, resolve } from 'node:path'
 import { parse } from 'yaml'
+import { readProject } from './lib/config.mjs'
 import { parseTasks } from './lib/tasks.mjs'
-import { splitDiffFiles, visualAssertionsFor, selectGroups } from './lib/evaluator-input.mjs'
+import {
+  splitDiffFiles,
+  visualAssertionsFor,
+  selectGroups,
+  dispatchCard,
+} from './lib/evaluator-input.mjs'
 
 const [changeId, groupArg, projectRoot = process.cwd()] = process.argv.slice(2)
 if (!changeId) {
@@ -13,6 +19,7 @@ if (!changeId) {
 }
 
 const changeDir = join(projectRoot, 'openspec', 'changes', changeId)
+const configPath = join(projectRoot, 'openspec', 'config.yaml')
 const git = (...args) =>
   execFileSync('git', args, { cwd: projectRoot, encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 })
 
@@ -50,25 +57,32 @@ const specs = existsSync(specsDir)
       .map((f) => ({ path: `specs/${f}`, content: readFileSync(join(specsDir, String(f)), 'utf8') }))
   : []
 
-console.log(
-  JSON.stringify(
-    {
-      changeId,
-      tier,
-      base,
-      groups: groups.map((g) => ({
-        number: g.number,
-        title: g.title,
-        tasks: g.tasks,
-        visual: visualAssertionsFor(g),
-      })),
-      specs,
-      changedFiles: code,
-      artifactFiles: artifacts,
-      // Only the code. The evaluator does not review the change's own paperwork.
-      diff: code.length > 0 ? git('diff', `${base}..HEAD`, '--', ...code) : '',
-    },
-    null,
-    2,
-  ),
-)
+const payload = {
+  changeId,
+  tier,
+  base,
+  // The evaluator's charter promises it is given this. Left out, it was
+  // reconstructed from the dev stack command at dispatch time.
+  devStackUrl: existsSync(configPath)
+    ? readProject(readFileSync(configPath, 'utf8')).devStackUrl
+    : null,
+  groups: groups.map((g) => ({
+    number: g.number,
+    title: g.title,
+    tasks: g.tasks,
+    visual: visualAssertionsFor(g),
+  })),
+  specs,
+  changedFiles: code,
+  artifactFiles: artifacts,
+  // Only the code. The evaluator does not review the change's own paperwork.
+  diff: code.length > 0 ? git('diff', `${base}..HEAD`, '--', ...code) : '',
+}
+
+// Written, not printed. Handing over a path costs one line; re-emitting the
+// payload into the dispatch costs it again in output tokens, every round.
+// Absolute: a subagent must not have to share this process's cwd to find it.
+const payloadPath = resolve(changeDir, '.evaluator-input.json')
+writeFileSync(payloadPath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8')
+
+console.log(JSON.stringify(dispatchCard(payload, payloadPath), null, 2))

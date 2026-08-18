@@ -53,6 +53,8 @@ test('init gitignores the workspaces the tooling creates', () => {
   assert.match(init, /\.claude\/worktrees\//)
   assert.match(init, /\.superpowers\//)
   assert.match(init, /embedded repo/i)
+  // Regenerated before every dispatch, like the extracted .feature files.
+  assert.match(init, /\.evaluator-input\.json/)
 })
 
 test('verify refuses to pass on unticked tasks', () => {
