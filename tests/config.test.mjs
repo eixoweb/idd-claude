@@ -80,16 +80,21 @@ test('operational settings come through with defaults', () => {
   const settings = readVerification('verification: {}')
   assert.equal(settings.maxIterations, 5)
   assert.equal(settings.evaluatorModel, 'sonnet')
-  assert.equal(settings.subagents, true)
 })
 
-test('worktree is off by default', () => {
-  // A worktree buys isolation from concurrent work. Solo and serial, it
-  // isolates from nothing while still costing a duplicated install and a dev
-  // server pointed at the wrong directory.
-  assert.equal(readVerification('verification: {}').worktree, false)
+test('execution shape is not a project setting', () => {
+  // How the work runs — subagents, worktree — varies per change, and the tier
+  // from /idd:explore already says it. Freezing it project-wide answered a
+  // per-change question in the wrong place.
+  const settings = readVerification('verification:\n  worktree: true\n  subagents: false\n')
+  assert.equal(settings.worktree, undefined)
+  assert.equal(settings.subagents, undefined)
 })
 
-test('worktree can be turned on', () => {
-  assert.equal(readVerification('verification:\n  worktree: true\n').worktree, true)
+test('the config carries only project facts and policy', () => {
+  const settings = readVerification('verification: {}')
+  assert.deepEqual(
+    Object.keys(settings).sort(),
+    ['enabled', 'evaluatorModel', 'floors', 'maxIterations'],
+  )
 })

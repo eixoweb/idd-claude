@@ -10,8 +10,10 @@ test('apply mandates the TDD skill at session start', () => {
   assert.match(apply, /superpowers:test-driven-development/)
 })
 
-test('apply makes the worktree a choice, not the default path', () => {
-  assert.match(apply, /verification\.worktree/)
+test('apply derives the run shape from the tier, not from config', () => {
+  assert.doesNotMatch(apply, /verification\.worktree|verification\.subagents/)
+  assert.match(apply, /bounded/i)
+  assert.match(apply, /architectural/i)
   assert.match(apply, /work in place/i)
   // The trap that makes an enabled worktree wrong: the visual gate would
   // probe the main checkout while the edits are in the worktree.
