@@ -1,6 +1,6 @@
 import { test } from 'vitest'
 import assert from 'node:assert/strict'
-import { UNKNOWN, computeVerdict } from '../scripts/lib/verdict.mjs'
+import { UNKNOWN, applicableDimensions, computeVerdict } from '../scripts/lib/verdict.mjs'
 
 const floors = { spec: 80, runtime: 100, code: 60, visual: 100, mutation: 70, acceptance: 100 }
 const enabled = ['spec', 'runtime', 'code', 'visual']
@@ -71,4 +71,48 @@ test('a missing score for an enabled dimension is unevaluated, not zero', () => 
   })
   assert.equal(v.status, 'BLOCK')
   assert.deepEqual(v.unevaluated, ['visual'])
+})
+
+// ---- Applicability: derived from the tasks artifact, never asserted ----
+
+const group = (...types) => ({ number: 1, title: 'g', tasks: types.map((type) => ({ type })) })
+
+test('visual does not apply to a group with no VISUAL task', () => {
+  // Scoring it 100 would be a free pass; scoring it UNKNOWN would BLOCK every
+  // non-UI group. It simply does not apply.
+  assert.deepEqual(
+    applicableDimensions(['spec', 'runtime', 'code', 'visual'], group('RED', 'GREEN')),
+    ['spec', 'runtime', 'code'],
+  )
+})
+
+test('visual applies as soon as the group has one VISUAL task', () => {
+  assert.ok(
+    applicableDimensions(['spec', 'visual'], group('RED', 'VISUAL')).includes('visual'),
+  )
+})
+
+test('a disabled dimension stays out regardless of the tasks', () => {
+  assert.deepEqual(applicableDimensions(['spec', 'code'], group('VISUAL')), ['spec', 'code'])
+})
+
+test('every other dimension applies whatever the group contains', () => {
+  const all = ['spec', 'runtime', 'code', 'mutation', 'acceptance']
+  assert.deepEqual(applicableDimensions(all, group('RED')), all)
+})
+
+test('without group information nothing is dropped', () => {
+  // Backward compatible: a caller that cannot say which group it is gets the
+  // strict behaviour, not the lenient one.
+  assert.deepEqual(applicableDimensions(['spec', 'visual'], null), ['spec', 'visual'])
+})
+
+test('a group whose VISUAL task was removed loses the dimension, not a free pass', () => {
+  const v = computeVerdict({
+    scores: { spec: 90, runtime: 100, code: 90 },
+    floors,
+    enabled: applicableDimensions(['spec', 'runtime', 'code', 'visual'], group('RED', 'GREEN')),
+  })
+  assert.equal(v.status, 'PASS')
+  assert.deepEqual(v.unevaluated, [], 'an inapplicable dimension must not read as unevaluated')
 })

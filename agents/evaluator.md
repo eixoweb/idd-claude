@@ -27,8 +27,11 @@ for the group. Nothing else is available to you, and you must not go looking.
 4. **Score `code`** (0-100): from the residual MEDIUM and LOW findings of the
    review in step 1.
 
-5. **Score `visual`** if the dimension is enabled: for every VISUAL task in the
-   group, **re-run** its assertions yourself — never read the result the
+5. **Score `visual`** if the dimension is enabled **and the group has at least
+   one VISUAL task**. If it has none, do not score it and do not invent a value
+   — the verdict step below works out that the dimension does not apply, by
+   reading the tasks file itself. For every VISUAL task in the group,
+   **re-run** its assertions yourself — never read the result the
    implementation session claimed. For each task, pass its assertion lines to:
 
    `node "${CLAUDE_PLUGIN_ROOT}/scripts/visual-cli.mjs" '<lines as JSON array>' <baseUrl>`
@@ -73,10 +76,13 @@ for the group. Nothing else is available to you, and you must not go looking.
 
 10. **Compute the verdict — do not decide it yourself.** Run:
 
-    `node "${CLAUDE_PLUGIN_ROOT}/scripts/verdict-cli.mjs" openspec/config.yaml '<scores as JSON>'`
+    `node "${CLAUDE_PLUGIN_ROOT}/scripts/verdict-cli.mjs" openspec/config.yaml '<scores as JSON>' openspec/changes/<id>/tasks.md <group number>`
 
-    Use `"UNKNOWN"` for any dimension you could not evaluate. Report the
-    status it returns, verbatim.
+    Passing the tasks file and the group number lets it work out which
+    dimensions this group can actually exercise, from the artifact rather than
+    from your say-so. Omit a score for any dimension it will rule out; use
+    `"UNKNOWN"` for one that applies but could not be evaluated. Report the
+    status it returns, verbatim, and the `applicable` list alongside it.
 
 ## Output
 
