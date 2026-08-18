@@ -8,7 +8,16 @@ everything before it implements, this decides.
 
 ## 1. Structure
 
-Run `openspec validate --all --json` and report any structural failure.
+```
+openspec validate <change id> --type change --strict --json
+```
+
+Scoped to this change on purpose. `--all` validates every change and spec in the
+project, which makes one change's gate depend on the state of every other: a
+half-written proposal in a neighbouring folder would fail a change that is
+perfectly fine. `--strict` because this is a gate, not a lint.
+
+Report any structural failure and stop.
 
 Read `tasks.md`: **every checkbox must be ticked.** List any that are not and
 stop — an unfinished change is not verifiable.
@@ -60,7 +69,15 @@ failing change. The verdict is `BLOCKED`, and that is what you report — never
 ## 3. Judge
 
 The measurements say the code runs. They do not say it is the code the change
-asked for. Three dimensions, and no script can settle them:
+asked for. Three dimensions, and no script can settle them.
+
+They are OpenSpec's own — the ones `/opsx:verify` checks — and they are
+reimplemented here rather than delegated to, for two reasons. That command lives
+in OpenSpec's expanded workflow profile, not the default `core` one, so
+delegating would make this gate depend on a profile the project may not have
+enabled. And it is advisory by design: its own documentation says it "does not
+block archive, but surfaces issues". This one decides. Wrapping an advisory tool
+and re-deciding its output buys a dependency and loses nothing else.
 
 - **Completeness** — every SHALL in the change's specs has an implementation.
   Name the file and lines for each; a requirement you cannot locate is a

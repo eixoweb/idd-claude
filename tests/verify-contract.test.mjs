@@ -64,3 +64,17 @@ test('the outcome waits for every strand, so nothing is reported half-measured',
   assert.match(flat, /Collect both/i)
   assert.match(flat, /before writing the outcome|only then/i)
 })
+
+test('the structural check is scoped to the change under verification', () => {
+  // `--all` made one change's gate depend on every other change in the project:
+  // a half-written proposal elsewhere would fail a change that is fine.
+  assert.match(verify, /openspec validate <change id> --type change --strict/)
+  assert.doesNotMatch(verify, /openspec validate --all/)
+})
+
+test('verify says where its three dimensions come from', () => {
+  // They are OpenSpec's own, from /opsx:verify. A reader should know that, and
+  // know why this reimplements rather than delegates.
+  assert.match(flat, /opsx:verify/)
+  assert.match(flat, /advisory|does not block/i)
+})
