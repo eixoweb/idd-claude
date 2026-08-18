@@ -39,12 +39,19 @@ test('an independent group does not wait on the previous verdict', () => {
   assert.match(applyFlat, /Only serialise when the groups genuinely depend/)
 })
 
+test('gathering the inputs is one scripted call, not hand-built git commands', () => {
+  // Two git diffs the agent composed itself, one redundant with the other, and
+  // a base ref it guessed. 282ms of script replaced it.
+  assert.match(apply, /evaluator-input-cli\.mjs/)
+  assert.match(applyFlat, /excludes the change's own artifacts/)
+})
+
 test('apply hands the evaluator its inputs rather than sending it looking', () => {
   // The evaluator's charter says it receives only the contract, specs and
   // diff. The dispatch has to make that true; asserting it is not enough — and
   // an evaluator that fetches its own inputs spends most of its turns on it.
-  assert.match(apply, /Gather its inputs and pass them in the dispatch/)
-  assert.match(apply, /Do not tell it to go and\s+find them/)
+  assert.match(applyFlat, /Gather its inputs with one command, and pass them in the dispatch/)
+  assert.match(applyFlat, /a charter the dispatch has to make true, not merely assert/)
   assert.match(apply, /verification\.evaluator_model/)
 })
 

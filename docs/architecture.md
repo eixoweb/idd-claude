@@ -57,6 +57,7 @@ in `scripts/`.**
 | `mutation.mjs` | `mutation-cli.mjs` | stryker |
 | `acceptance.mjs` | `acceptance-cli.mjs` | extractor, cucumber-js |
 | `preflight.mjs` | `preflight-cli.mjs` | `which` |
+| `evaluator-input.mjs` | `evaluator-input-cli.mjs` | git |
 | `promote-schema.mjs`, `openspec-version.mjs`, `frontmatter.mjs` | `promote.mjs` | openspec |
 
 The split is why the interesting parts are testable without fixtures or
@@ -76,8 +77,15 @@ available, an agent was free to check it by running it, which starts a daemon.
 time.
 
 The same reasoning already applies to the verdict, to dimension applicability,
-to the mutation scope and to the recheck list. The rule generalises: **if the
-answer is derivable, derive it — the prompt is for judgement, not evaluation.**
+to the mutation scope, to the recheck list, and to gathering the evaluator's
+inputs — which had been two hand-composed git diffs, one redundant with the
+other, over a base ref the agent guessed. The rule generalises: **if the answer
+is derivable, derive it — the prompt is for judgement, not evaluation.**
+
+A corollary worth stating: the payload matters as much as the call. The gathered
+diff excludes the change's own `openspec/` artifacts, because an evaluator has
+no business re-reading the proposal it measures against — on the trial change
+that is nine files of paperwork dropped and a 123-line code diff left.
 
 ## Prompts are tested structurally
 
