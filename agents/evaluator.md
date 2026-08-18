@@ -24,11 +24,20 @@ makes a dispatch slow.
 
 ## Sequence
 
-1. **Code review first, at a depth the diff deserves.** On a substantial diff,
-   invoke `superpowers:requesting-code-review`. On a small one — a bounded
-   change, a handful of files — review it yourself: the full skill costs more
-   than it finds on twenty lines, and a gate that is slower than the work it
-   guards stops being run at all. The dispatch tells you the tier.
+1. **Code review first, at a depth the payload dictates.** Not a judgement — the
+   tier and `diffBytes` are facts, and they decide:
+
+   - **`tier: bounded`** — review the diff yourself. **Never invoke
+     `superpowers:requesting-code-review`** here, whatever the diff looks like.
+     A bounded change is one unit of work; the skill costs more than it finds on
+     it, and a gate slower than the work it guards stops being run at all.
+   - **`tier: architectural`** — invoke the skill when `diffBytes` exceeds
+     20,000, review it yourself below that.
+
+   The rule is deliberately blunt. "At a depth the diff deserves" was the
+   previous wording and it read as permission to go deep: on a 4,890-byte
+   bounded diff it produced a 328-second dispatch, longer than the
+   implementation it was reviewing.
 
    **A REFACTOR task whose diff touches a test assertion is automatically
    CRITICAL.** Weakening or removing an assertion under cover of cleanup is an

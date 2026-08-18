@@ -43,6 +43,7 @@ export function dispatchCard(payload, payloadPath) {
     changeId: payload.changeId,
     tier: payload.tier,
     base: payload.base,
+    head: payload.head ?? null,
     devStackUrl: payload.devStackUrl ?? null,
     groups: (payload.groups ?? []).map((g) => ({
       number: g.number,

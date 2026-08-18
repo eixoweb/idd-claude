@@ -28,7 +28,7 @@ test('the evaluator works from the dispatch rather than fetching its inputs', ()
 test('the evaluator prompt encodes the design rules', () => {
   const body = readFileSync(agentPath, 'utf8')
   assert.match(body, /requesting-code-review/, 'it must run the code review itself')
-  assert.match(body, /at a depth the diff deserves/, 'review depth must follow the diff')
+  assert.match(body, /at a depth the payload dictates/, 'review depth must follow the diff')
   assert.match(body, /CRITICAL|HIGH/, 'it must block on critical findings without scoring')
   assert.match(body, /verdict-cli\.mjs/, 'it must not compute the verdict itself')
   assert.match(body, /re-?run|replay/i, 'it must replay the VISUAL assertions rather than trust them')
@@ -219,4 +219,12 @@ test('the evaluator opens the one file it is handed', () => {
   const body = readFileSync(agentPath, 'utf8')
   assert.match(body, /payload/i)
   assert.match(body, /not .*going looking|is not going looking|does not count as going looking/i)
+})
+
+test('the review depth is a rule, not a judgement', () => {
+  // 4890 bytes of diff cost a 328s dispatch. "At a depth the diff deserves" is
+  // advice; the tier and the byte count are facts the payload already carries.
+  const body = readFileSync(agentPath, 'utf8').replace(/\s+/g, ' ')
+  assert.match(body, /bounded.{0,120}never invoke `superpowers:requesting-code-review`/i)
+  assert.match(body, /diffBytes/)
 })

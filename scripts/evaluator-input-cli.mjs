@@ -61,6 +61,9 @@ const payload = {
   changeId,
   tier,
   base,
+  // The commit this evaluation measures. Without it nothing downstream can tell
+  // whether code moved after the gate, so everyone re-measures to be safe.
+  head: git('rev-parse', 'HEAD').trim(),
   // The evaluator's charter promises it is given this. Left out, it was
   // reconstructed from the dev stack command at dispatch time.
   devStackUrl: existsSync(configPath)

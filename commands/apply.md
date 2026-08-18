@@ -201,5 +201,23 @@ than a line the prompt hopes you follow.
 
 ## End of the change
 
-Invoke `superpowers:verification-before-completion`, then hand off to
-`/idd:verify`.
+Invoke `superpowers:verification-before-completion` — but do not read it as an
+order to re-measure what the gate just measured. The evaluator ran the test
+commands and re-ran every VISUAL assertion itself, minutes ago. Ask first
+whether anything it measured has moved:
+
+```
+git diff --name-only <the payload's `head`>..HEAD -- ':!openspec/'
+```
+
+- **Empty** — no code changed since the evaluation; only `verification.md` and
+  `tasks.md` moved, which this tooling excludes from review as paperwork. The
+  verdict stands: report it as **carried, not re-measured**, and say so.
+- **Non-empty** — something really did change after the gate. Name the files and
+  re-run the dimensions they could have reached.
+
+The evidence the skill asks for is the diff being empty. Re-running a green
+suite to watch it be green again is not evidence, it is ceremony — and it is the
+one case the check cannot fail, so it proves nothing that the emptiness does not.
+
+Then hand off to `/idd:verify`.

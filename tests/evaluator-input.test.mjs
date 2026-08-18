@@ -110,3 +110,9 @@ test('the card still says what is being dispatched, so the run is readable', () 
   assert.equal(card.changedFiles, 2)
   assert.equal(card.diffBytes, 40000)
 })
+
+test('the card names the commit the evaluation was assembled at', () => {
+  // Without it, nothing downstream can tell whether code moved after the gate.
+  const card = dispatchCard({ ...PAYLOAD, head: 'deadbee' }, '/tmp/p.json')
+  assert.equal(card.head, 'deadbee')
+})

@@ -134,3 +134,12 @@ test('the automatic REFACTOR rule is enforced by a script, before the dispatch',
   assert.match(apply, /refactor-guard-cli\.mjs/)
   assert.match(applyFlat, /before dispatching/i)
 })
+
+test('the end of a change carries the verdict forward instead of re-measuring it', () => {
+  // The evaluator already ran the tests and re-ran every visual assertion. Only
+  // verification.md and tasks.md move afterwards — files the tooling itself
+  // excludes from review as paperwork.
+  assert.match(applyFlat, /carried.{0,60}not re-measured|carry it forward/i)
+  assert.match(apply, /payload's `head`|`head`/)
+  assert.match(applyFlat, /':!openspec\/'/)
+})
