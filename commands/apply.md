@@ -7,50 +7,34 @@ Implement the change named in the argument, under hard gates.
 
 ## Before anything
 
-Read `openspec/config.yaml`. Then check every enabled dimension can actually
-be evaluated, and **refuse to start** if one cannot:
+```
+node "${CLAUDE_PLUGIN_ROOT}/scripts/preflight-cli.mjs" <change id> .
+```
 
-- `visual: true` but `dev-browser` is not on PATH, or
-  `project.dev_stack_command` is empty → stop, say which is missing.
-- `mutation: true` but no `stryker.config.json` in the project → stop, say so.
-- `spec_as_source: true` but `acceptance-tests/` is missing, or `cucumber-js`
-  is not installed in the project → stop, say which. Run `/idd:init --acceptance`
-  to scaffold it.
-- `runtime: true` (the default) but `project.test_commands` is empty → stop.
-  Either configure the commands, or set `runtime: false` to record that this
-  project has no test suite. Do not proceed with the dimension enabled and
-  nothing to run: every group would BLOCK.
-- `runtime: false` → say so at the start of the run. The change will be gated
-  on `spec`, `code` and whatever else is enabled, and on nothing executable.
+It answers every question this command needs before it starts, and it answers
+them the same way every time. On a non-zero exit, report its `refusals`
+verbatim and **stop** — a dimension that is enabled but unevaluable stops the
+run rather than quietly disappearing from the verdict. Report its `notes` too.
 
-Never degrade silently. A dimension that is enabled but unevaluable stops the
-run; it does not quietly disappear from the verdict.
+On success it returns `tier`, `subagents` and `worktree`. Announce the shape you
+are running in, then follow it:
+
+- **bounded** — work in place on the current branch, no per-task subagents. One
+  person doing one thing has no concurrency to protect, and the branch already
+  guards the main line.
+- **architectural** — `superpowers:using-git-worktrees`, and one subagent per
+  task via `superpowers:subagent-driven-development`.
+
+**One hard rule the script cannot see.** If `worktree` is true and the dev stack
+serves a single docroot — DDEV, for one — do not use one: the visual gate probes
+what the server serves, so it would score the main checkout while the edits live
+elsewhere. Say so and work in place.
 
 ## Session setup
 
-1. **Decide the shape of the run from the tier, and say what you chose.**
-
-   The tier comes from `/idd:explore`, or from the schema the change was
-   created with — `idd-claude-lite` is bounded, `idd-claude` is architectural.
-   It already answers both questions below; neither is a project setting,
-   because both vary from one change to the next.
-
-   | | Bounded | Architectural |
-   | --- | --- | --- |
-   | subagents | no — do the work directly | one per task, via `superpowers:subagent-driven-development` |
-   | worktree | no — work in place on the current branch | `superpowers:using-git-worktrees`, when groups run in parallel or the workspace should be disposable |
-
-   A worktree isolates a change from concurrent work. One person doing one
-   thing has no concurrency to isolate from, and the branch already protects
-   the main line — so the default for a bounded change is to work in place.
-
-   **One hard rule, not a judgement.** If `visual` is enabled and the dev stack
-   serves a single docroot — DDEV, for one — never use a worktree. The gate
-   probes what the server serves, so it would score the main checkout while the
-   edits live elsewhere: green on the wrong files.
-2. Invoke `superpowers:test-driven-development`. This is mandatory and holds
-   "no GREEN without a preceding RED" for the whole session.
-3. Read `tasks.md` and group the work:
+1. Invoke `superpowers:test-driven-development`. Mandatory: it holds "no GREEN
+   without a preceding RED" for the whole session.
+2. Read the groups:
    `node "${CLAUDE_PLUGIN_ROOT}/scripts/tasks-cli.mjs" openspec/changes/<id>/tasks.md`
 
 ## Per task
