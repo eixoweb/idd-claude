@@ -4,10 +4,12 @@ import { readFileSync } from 'node:fs'
 import { parse } from 'yaml'
 
 const root = new URL('../', import.meta.url)
-const instruction = (dir) =>
+const artifact = (dir, id) =>
   parse(readFileSync(new URL(`${dir}/schema.yaml`, root), 'utf8')).artifacts.find(
-    (a) => a.id === 'tasks',
-  ).instruction
+    (a) => a.id === id,
+  )
+
+const instruction = (dir) => artifact(dir, 'tasks').instruction
 
 const template = (dir) => readFileSync(new URL(`${dir}/templates/tasks.md`, root), 'utf8')
 
@@ -54,3 +56,26 @@ test('the upstream tasks instruction is not what ships', () => {
     )
   }
 })
+
+// ---- verification: the artifact still described the evaluator ----
+
+for (const dir of ['schema', 'schema-lite']) {
+  test(`${dir}: the verification artifact describes the report verify writes`, () => {
+    // It described the evaluator's per-group, per-attempt scorecard — with
+    // floors and an iteration cap — none of which has existed since the gate
+    // became a single /idd:verify pass.
+    const text = artifact(dir, 'verification').instruction
+    assert.doesNotMatch(text, /evaluator|floors|attempt|iteration cap/i)
+    assert.match(text, /\/idd:verify/)
+    assert.match(text.replace(/\s+/g, ' '), /PASS WITH WARNINGS/)
+    assert.match(text, /BLOCKED/)
+  })
+
+  test(`${dir}: the verification template carries no dead machinery`, () => {
+    const text = readFileSync(new URL(`${dir}/templates/verification.md`, root), 'utf8')
+    assert.doesNotMatch(text, /verdict-cli|Floors in force|Attempt/i)
+    assert.match(text, /Completeness/)
+    assert.match(text, /Correctness/)
+    assert.match(text, /Coherence/)
+  })
+}

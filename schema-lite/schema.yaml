@@ -186,28 +186,27 @@ artifacts:
       - specs
   - id: verification
     generates: verification.md
-    description: Evaluator verdict and iteration log for the change
+    description: The single verification report /idd:verify writes
     template: verification.md
     requires:
       - tasks
-    instruction: >
-      Record the evaluator verdict for each task group.
+    instruction: |
+      Record what /idd:verify measured and judged, once, for the whole change.
 
+      The measured dimensions come verbatim from `verify-cli.mjs`: their status, and the mutation score against its threshold when that dimension is on. Do not restate them from memory and do not re-run them to confirm - a green suite watched twice is the one check that cannot fail.
 
-      One entry per group and per attempt: the dimension scores, the floors in
-      force, the verdict, and the findings that produced it. A group is only
-      recorded once its verdict is PASS or once the iteration cap is reached.
+      The judged dimensions are Completeness, Correctness and Coherence, each with the findings that produced it, plus whatever the independent code review returned.
 
+      The outcome is one of PASS, PASS WITH WARNINGS, FAIL or BLOCKED. BLOCKED means a dimension could not be measured - a dev stack that would not answer - and is never to be reported as FAIL, nor quietly as PASS. Name what could not run.
 
-      Never write this file by hand during implementation - it is produced by
-      the evaluator subagent.
+      Never write this file by hand during implementation. It is the record a reviewer reads instead of taking the run on trust, and a report written before the measurements exist is worth less than no report.
 apply:
   requires:
     - tasks
   tracks: tasks.md
   instruction: >
     Do not implement these tasks directly. Run /idd:apply, which enforces the
-    TDD gates and dispatches the evaluator at the end of each task group.
+    TDD gates, runs the scripted guards, and hands off to /idd:verify.
 
 
     Implementing without it produces a change that has never been verified

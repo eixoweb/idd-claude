@@ -1,30 +1,39 @@
 # Verification Report
 
 **Change**: `<change-name>`
-**Schema**: idd-claude
+**Outcome**: `<PASS | PASS WITH WARNINGS | FAIL | BLOCKED>`
 
-## Group <N>
+## Measured
 
-| Attempt | spec | runtime | visual | code | mutation | acceptance | Verdict |
-| ------- | ---- | ------- | ------ | ---- | -------- | ---------- | ------- |
-| 1       | —    | —       | —      | —    | —        | —          | —       |
+Verbatim from `verify-cli.mjs`.
 
-**Dimensions applicable to this group**: `<the `applicable` list from verdict-cli>`
+| Dimension | Status | Detail |
+| --------- | ------ | ------ |
+| `runtime` | — | — |
+| `visual` | — | — |
+| `mutation` | — | `<score>` against threshold `<n>` |
+| `acceptance` | — | — |
 
-**Dimensions disabled for this project**: `<list, or "none">`
+<!-- A dimension the config disables does not appear. One that is enabled but
+     could not be measured is UNKNOWN, and the outcome is BLOCKED. -->
 
-**Floors in force**: `<copied from openspec/config.yaml>`
+## Judged
 
-**Findings**
+**Completeness** — every SHALL has an implementation, named by file and line.
+
+**Correctness** — what was built matches the requirement, every scenario covered.
+
+**Coherence** — the change follows the design and the patterns already there.
+
+**Code review** — findings from `superpowers:requesting-code-review`.
+
+## Findings
 
 - <dimension>: <finding>
 
-**Generated fix tasks**
+## Warnings
 
-- <N>.F1 FIX — <actionable fix>
+<!-- Recorded even when the outcome is PASS. A warning nobody wrote down was not
+     a warning — the visual coverage warning belongs here. -->
 
-## Outcome
-
-- [ ] PASS — every group met its floors
-- [ ] BLOCKED — infrastructure could not be evaluated
-- [ ] STOPPED — iteration cap reached
+- <none, or the warning>
