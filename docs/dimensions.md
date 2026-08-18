@@ -165,6 +165,22 @@ And, as everywhere else here, the decision is derived from the files rather
 than reported by the evaluator: an evaluator asked to judge what it may skip
 has an obvious incentive.
 
+## Work no requirement governs
+
+If the diff delivers behaviour no `SHALL` covers, the evaluator returns `BLOCK`
+and says so — and it does **not** generate a fix task that writes the missing
+requirement.
+
+Whether the spec was incomplete or the work was out of scope has opposite
+remedies: one grows the spec, the other drops the code. Only a human can say
+which. Letting the evaluator write the requirement resolves it by making the
+code correct by construction — the spec and the code then come out of the same
+round with nobody in between.
+
+A real run produced exactly this, and wrote a *good* requirement, which is what
+makes it worth guarding against: a well-written retrofit is harder to notice
+than a lazy one.
+
 ## The verdict is computed outside the model
 
 The evaluator produces scores. It does **not** decide the verdict — it calls:

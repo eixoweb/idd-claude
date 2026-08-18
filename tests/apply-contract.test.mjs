@@ -39,6 +39,13 @@ test('an independent group does not wait on the previous verdict', () => {
   assert.match(applyFlat, /Only serialise when the groups genuinely depend/)
 })
 
+test('every round is recorded by a command, not by a hopeful instruction', () => {
+  // A real run produced two BLOCK rounds and no verification.md at all.
+  assert.match(apply, /record-round-cli\.mjs/)
+  assert.match(applyFlat, /after \*\*every\*\* verdict, including a `BLOCK`/)
+  assert.match(applyFlat, /recorded none of them has verified nothing anyone else can check/)
+})
+
 test('gathering the inputs is one scripted call, not hand-built git commands', () => {
   // Two git diffs the agent composed itself, one redundant with the other, and
   // a base ref it guessed. 282ms of script replaced it.

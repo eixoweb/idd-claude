@@ -150,7 +150,20 @@ It returns a `recheck` list. Dispatch the evaluator with:
 catches damage anywhere, which is what makes skipping the expensive local
 dimensions safe rather than optimistic.
 
-Record each round in `verification.md`.
+### Record every round
+
+```
+node "${CLAUDE_PLUGIN_ROOT}/scripts/record-round-cli.mjs" <change id> '<round as JSON>' .
+```
+
+Run it after **every** verdict, including a `BLOCK` — especially a `BLOCK`, which
+is where a reader most wants to know what happened. The round is
+`{group, attempt, status, scores, applicable, carried, findings, fixTasks}`.
+
+This is the audit trail: what a reviewer reads in the PR instead of taking a
+`PASS` on trust. A run that produced rounds and recorded none of them has
+verified nothing anyone else can check — which is why it is a command rather
+than a line the prompt hopes you follow.
 
 ## End of the change
 
