@@ -122,16 +122,22 @@ that gates every task group ends up costing more than the work it guards —
 measured on a small change, an evaluator subagent spent 8.3 minutes guarding 8.7
 minutes of implementation — and then it stops being run at all.
 
-Verify does four things, in order:
+Verify does four things, and only the first and the last are ordered:
 
 1. **Structure** — `openspec validate`, every checkbox ticked, working tree
-   clean.
+   clean. An unfinished change is not worth measuring.
 2. **Measure** — one call to `verify-cli.mjs` runs every mechanical dimension the
-   config enables and returns a verdict over them.
+   config enables and returns a verdict over them. Started in the background.
 3. **Judge** — Completeness, Correctness, Coherence, plus an independent
-   `requesting-code-review`.
+   `requesting-code-review` dispatched alongside the measuring.
 4. **Report** — one `verification.md`: PASS, PASS WITH WARNINGS, FAIL or
-   BLOCKED.
+   BLOCKED, written once every strand is in.
+
+**Steps 2 and 3 share no input.** The scripts read the config and the tasks, the
+review reads the diff, the spec-to-code reading reads the specs — so the two slow
+ones start first and the reading happens while they run. In sequence the wall
+clock is their sum, and with `mutation` on the scripts are the longest thing in
+the run.
 
 `BLOCKED` is not `FAIL`. It means a dimension could not be measured — a dev
 stack that would not answer — and saying so is the point. See

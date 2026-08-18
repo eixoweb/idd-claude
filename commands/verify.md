@@ -15,21 +15,43 @@ stop — an unfinished change is not verifiable.
 
 Confirm the working tree is clean and the change's commits exist.
 
-## 2. Measure — one command
+## 2. Measure and review — start both, then read
+
+Three things happen here and **they share no input**: the scripts need the
+config and the tasks, the code review needs the diff, the reading needs the
+specs. Run in sequence their wall clock is the sum, and the two slow ones are
+the ones you can start and walk away from.
+
+**Start both before you read anything.**
+
+Measure, in the background:
 
 ```
 node "${CLAUDE_PLUGIN_ROOT}/scripts/verify-cli.mjs" <change id> .
 ```
 
 It runs every mechanical dimension the config enables — the test commands, all
-the change's VISUAL assertions in a single browser session, mutation against
-the change's own base, the Gherkin scenarios — and returns each one's status
-plus a `verdict` over them.
+the change's VISUAL assertions in a single browser session, mutation against the
+change's own base, the Gherkin scenarios — and returns each one's status plus a
+`verdict` over them. **One command on purpose:** four scripts invoked one at a
+time cost four tool round trips, each worth more than the script it wraps. With
+`mutation` on it is the longest thing in the run, which is exactly why it should
+not be blocking a reading it has nothing to do with.
 
-**One command on purpose.** These are four scripts; invoking them one at a time
-costs four tool round trips, each of which costs more than the script it wraps.
-Take its output as measured: re-running a dimension by hand to confirm it is
-green is the one check that cannot fail.
+Review, as a subagent: invoke `superpowers:requesting-code-review`. It reviews
+independently, which is the point — an author is the worst judge of whether the
+work matches the intent, and this is the one place in the workflow where an
+outside opinion is worth its cost. Dispatch it and **do not idle** waiting on it.
+
+**While they run**, judge the three dimensions in step 3 yourself. That reading is
+yours to do and needs neither of them.
+
+**Collect both before writing the outcome.** A report assembled from one strand
+while another is still running has measured less than it claims, and this report
+exists precisely so a reviewer does not have to take the run on trust.
+
+Take the command's output as measured: re-running a dimension by hand to confirm
+it is green is the one check that cannot fail.
 
 A dimension reported `UNKNOWN` is infrastructure that would not answer, not a
 failing change. The verdict is `BLOCKED`, and that is what you report — never
@@ -48,10 +70,8 @@ asked for. Three dimensions, and no script can settle them:
 - **Coherence** — the change follows the design and the patterns already in the
   codebase.
 
-For the code itself, invoke `superpowers:requesting-code-review`. It reviews
-independently, which is the point: an author is the worst judge of whether the
-work matches the intent, and this is the one place in the workflow where an
-outside opinion is worth its cost.
+The code review dispatched in step 2 lands here: fold its findings in with these
+three when you write the report.
 
 **Work no requirement governs is a CRITICAL.** If the diff delivers behaviour
 that no SHALL covers, say so and fail. Do **not** write the missing requirement:

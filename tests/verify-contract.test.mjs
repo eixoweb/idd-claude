@@ -50,3 +50,17 @@ test('verify writes one report and cannot soften it', () => {
   assert.match(flat, /PASS WITH WARNINGS/)
   assert.match(flat, /BLOCKED/)
 })
+
+test('the three independent halves of verify do not wait on each other', () => {
+  // The scripts, the code review and the spec-to-code reading share no input.
+  // Run in sequence the wall clock is their sum; the review is a subagent and
+  // the scripts can hold a browser and a mutation run.
+  assert.match(flat, /Start both.*before you read anything|do not idle/i)
+  assert.match(flat, /in the background/i)
+  assert.match(flat, /while they run/i)
+})
+
+test('the outcome waits for every strand, so nothing is reported half-measured', () => {
+  assert.match(flat, /Collect both/i)
+  assert.match(flat, /before writing the outcome|only then/i)
+})
