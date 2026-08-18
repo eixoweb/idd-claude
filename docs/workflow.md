@@ -10,6 +10,12 @@
 Only `propose → apply → verify → archive` produces files. `explore` writes
 nothing: its output is a decision.
 
+`/idd:propose <id> --auto` drops the confirmations: no checkpoint between
+artifacts, no "shall we proceed" once `grilling` has emptied its frontier, and
+the change folder is committed for you. It still runs the tier guard and still
+holds the interview — the flag removes prompts, not judgement. See
+[the command](../commands/propose.md).
+
 ## Three tiers, and why they matter
 
 The full pipeline is disproportionate for most changes. `/idd:explore`

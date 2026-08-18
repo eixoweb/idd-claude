@@ -1,6 +1,6 @@
 {
   "name": "idd",
-  "version": "0.15.0",
+  "version": "0.16.0",
   "description": "OpenSpec workflow for Claude Code with enforced Superpowers TDD, a scored evaluator gate, and measured visual verification.",
   "author": {
     "name": "Matthieu Guirlinger"

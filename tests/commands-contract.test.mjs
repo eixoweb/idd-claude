@@ -125,3 +125,31 @@ test('init wires the git discipline skill the way upstream does', () => {
   assert.match(init, /AGENTS\.md/)
   assert.match(init, /openspec-git-discipline/)
 })
+
+test('propose has an --auto flag that removes the confirmations', () => {
+  // Two prompts got in the way of a real run: a checkpoint after every artifact,
+  // and "Good to proceed?" once grilling had already collected every answer.
+  const propose = read('propose.md')
+  const flat = propose.replace(/\s+/g, ' ')
+  assert.match(propose, /--auto/)
+  assert.match(flat, /Do not stop between artifacts/i)
+  assert.match(flat, /proceed rather than asking whether to proceed/i)
+})
+
+test('--auto keeps the interview and the guards it cannot answer for', () => {
+  // A flag that skipped the tier guard would let a change be opened faster that
+  // should not be opened at all.
+  const flat = read('propose.md').replace(/\s+/g, ' ')
+  assert.match(flat, /never skips/i)
+  assert.match(flat, /tier guard/i)
+  assert.match(flat, /the interview itself/i)
+})
+
+test('propose says why the change folder is committed, not just that it is', () => {
+  // Uncommitted, the base-ref derivation finds no introducing commit and falls
+  // back to the repository root — every later diff carries the whole history.
+  const flat = read('propose.md').replace(/\s+/g, ' ')
+  assert.match(flat, /openspec-git-discipline/)
+  assert.match(flat, /base ref/i)
+  assert.match(flat, /root commit/i)
+})
