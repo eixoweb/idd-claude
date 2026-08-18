@@ -20,15 +20,7 @@ const VERIFICATION_BLOCK = `verification:
   runtime: true                # set to false only for a project with no test suite
   visual: true                 # dev-browser gate
   mutation: false              # mutation testing - off by default
-  floors:                      # a dimension below its floor -> RETRY
-    spec: 80
-    runtime: 100
-    visual: 100
-    code: 60
-    mutation: 70
-    acceptance: 100
-  max_iterations: 5
-  evaluator_model: sonnet
+  mutation_threshold: 70       # the only partial score that means anything
 
 project:
   dev_stack_command: ""

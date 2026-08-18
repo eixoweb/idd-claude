@@ -36,16 +36,7 @@ verification:
   runtime: true                # set to false only for a project with no test suite
   visual: false                # no UI in this project
   mutation: true               # the tests are the deliverable here
-  floors:                      # a dimension below its floor -> RETRY
-    spec: 80
-    runtime: 100
-    visual: 100
-    code: 60
-    mutation: 70
-    acceptance: 100
-  max_iterations: 5
-  evaluator_model: sonnet
-
+  mutation_threshold: 70       # the only partial score that means anything
 project:
   dev_stack_command: ""   # none: no UI
   dev_stack_url: ""       # none: no UI

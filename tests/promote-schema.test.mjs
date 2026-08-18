@@ -50,10 +50,11 @@ test('promoteSchema writes a default config when none exists', () => {
   assert.equal(config.verification.runtime, true)
   assert.equal(config.verification.visual, true)
   assert.equal(config.verification.mutation, false)
-  assert.equal(config.verification.floors.runtime, 100)
-  assert.equal(config.verification.floors.visual, 100)
-  assert.equal(config.verification.floors.mutation, 70)
-  assert.equal(config.verification.max_iterations, 5)
+  // One threshold, not a table of floors: runtime, visual and acceptance are
+  // pass/fail, and mutation is the only partial score that means anything.
+  assert.equal(config.verification.mutation_threshold, 70)
+  assert.equal(config.verification.floors, undefined)
+  assert.equal(config.verification.max_iterations, undefined)
 })
 
 test('promoteSchema never overwrites an existing config', () => {
@@ -94,7 +95,7 @@ test('mergeConfig adds the verification block to a config that lacks one', () =>
   assert.equal(verificationAdded, true)
   const config = parse(source)
   assert.equal(config.verification.runtime, true)
-  assert.equal(config.verification.floors.visual, 100)
+  assert.equal(config.verification.mutation_threshold, 70)
   assert.ok(config.project, 'the project block must come with it')
 })
 

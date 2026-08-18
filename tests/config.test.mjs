@@ -2,24 +2,6 @@ import { test } from 'vitest'
 import assert from 'node:assert/strict'
 import { ALL_DIMENSIONS, readProject, readVerification } from '../scripts/lib/config.mjs'
 
-const base = `
-schema: idd-claude
-verification:
-  spec_as_source: false
-  visual: true
-  mutation: false
-  subagents: true
-  floors: { spec: 80, runtime: 100, visual: 100, code: 60, mutation: 70, acceptance: 100 }
-  max_iterations: 5
-  evaluator_model: sonnet
-`
-
-test('spec and code are always enabled', () => {
-  const { enabled } = readVerification('verification:\n  runtime: false\n')
-  assert.ok(enabled.includes('spec'))
-  assert.ok(enabled.includes('code'))
-})
-
 test('runtime is enabled when the flag is absent', () => {
   assert.ok(readVerification('verification: {}').enabled.includes('runtime'))
 })
@@ -29,81 +11,56 @@ test('runtime: false removes the dimension', () => {
   assert.ok(!enabled.includes('runtime'), 'an opted-out project must not be scored on runtime')
 })
 
-test('runtime: true is accepted explicitly', () => {
-  assert.ok(readVerification('verification:\n  runtime: true\n').enabled.includes('runtime'))
-})
-
 test('visual, mutation and acceptance follow their flags', () => {
-  const { enabled } = readVerification(base)
+  const { enabled } = readVerification(
+    'verification:\n  visual: true\n  mutation: false\n  spec_as_source: false\n',
+  )
   assert.ok(enabled.includes('visual'), 'visual: true must enable the dimension')
   assert.ok(!enabled.includes('mutation'), 'mutation: false must disable it')
   assert.ok(!enabled.includes('acceptance'), 'spec_as_source: false must disable acceptance')
 })
 
-test('spec_as_source drives the acceptance dimension', () => {
-  const { enabled } = readVerification('verification:\n  spec_as_source: true\n')
-  assert.ok(enabled.includes('acceptance'))
+test('spec_as_source is the single switch for the acceptance dimension', () => {
+  assert.ok(readVerification('verification:\n  spec_as_source: true\n').enabled.includes('acceptance'))
 })
 
-test('floors fall back to the documented defaults', () => {
-  const { floors } = readVerification('verification: {}')
-  assert.equal(floors.runtime, 100)
-  assert.equal(floors.visual, 100)
-  assert.equal(floors.spec, 80)
-  assert.equal(floors.code, 60)
-  assert.equal(floors.mutation, 70)
+test('only measured dimensions are switchable', () => {
+  // spec and code are judged once in /idd:verify. A judgement has no switch, and
+  // listing them here would invite a project to turn the judgement off.
+  assert.deepEqual(ALL_DIMENSIONS, ['runtime', 'visual', 'mutation', 'acceptance'])
+  assert.ok(!readVerification('verification: {}').enabled.includes('spec'))
+  assert.ok(!readVerification('verification: {}').enabled.includes('code'))
 })
 
-test('a floor outside 0-100 is rejected loudly', () => {
-  assert.throws(
-    () => readVerification('verification:\n  floors: { spec: 120 }\n'),
-    /floor for "spec"/,
-    'an out-of-range floor must name the dimension',
-  )
+test('mutation has a threshold, and it is the only one', () => {
+  // runtime, visual and acceptance are pass/fail: their old floors were all 100,
+  // which is a boolean wearing a number. Mutation is the one partial score that
+  // means something.
+  assert.equal(readVerification('verification: {}').mutationThreshold, 70)
+  assert.equal(readVerification('verification:\n  mutation_threshold: 85\n').mutationThreshold, 85)
 })
 
-test('an unknown dimension in floors is rejected', () => {
-  assert.throws(
-    () => readVerification('verification:\n  floors: { speed: 50 }\n'),
-    /unknown dimension "speed"/,
-  )
-})
-
-test('every dimension has a declared floor', () => {
-  const { floors } = readVerification(base)
-  for (const dimension of ALL_DIMENSIONS) {
-    assert.equal(typeof floors[dimension], 'number', `${dimension} has no floor`)
-  }
-})
-
-test('operational settings come through with defaults', () => {
-  const settings = readVerification('verification: {}')
-  assert.equal(settings.maxIterations, 5)
-  // No default here any more: the model follows the tier, which only the
-  // preflight knows. Absent means "not configured", not "sonnet".
-  assert.equal(settings.evaluatorModel, null)
+test('a threshold outside 0-100 is rejected loudly, with the value named', () => {
+  assert.throws(() => readVerification('verification:\n  mutation_threshold: 140\n'), /140/)
+  assert.throws(() => readVerification('verification:\n  mutation_threshold: "x"\n'), /mutation_threshold/)
 })
 
 test('execution shape is not a project setting', () => {
   // How the work runs — subagents, worktree — varies per change, and the tier
-  // from /idd:explore already says it. Freezing it project-wide answered a
-  // per-change question in the wrong place.
+  // from the change schema already says it.
   const settings = readVerification('verification:\n  worktree: true\n  subagents: false\n')
   assert.equal(settings.worktree, undefined)
   assert.equal(settings.subagents, undefined)
 })
 
 test('the config carries only project facts and policy', () => {
-  const settings = readVerification('verification: {}')
-  assert.deepEqual(
-    Object.keys(settings).sort(),
-    ['enabled', 'evaluatorModel', 'floors', 'maxIterations'],
-  )
+  assert.deepEqual(Object.keys(readVerification('verification: {}')).sort(), [
+    'enabled',
+    'mutationThreshold',
+  ])
 })
 
 test('the project facts are read in one place, not parsed again per caller', () => {
-  // The preflight and the evaluator dispatch both need the dev stack URL. Two
-  // readers of the same key is how they drift apart.
   const project = readProject(
     'project:\n  dev_stack_command: "pnpm dev"\n  dev_stack_url: "http://localhost:5173"\n  test_commands: ["pnpm test"]\n',
   )

@@ -12,7 +12,6 @@ const skillDirs = readdirSync(skillsRoot, { withFileTypes: true })
 
 const EXPECTED = [
   'acceptance-test-authoring',
-  'adversarial-authoring',
   'architectural-decision-records',
   'c4-diagrams',
   'gherkin-authoring',
@@ -52,20 +51,3 @@ test('no skill references an OpenCode path', () => {
 })
 
 const agentsRoot = fileURLToPath(new URL('../agents/', import.meta.url))
-
-test('the adversarial agents are ported with Claude Code frontmatter', () => {
-  for (const file of ['adversarial-author.md', 'adversarial-reviewer.md']) {
-    const path = join(agentsRoot, file)
-    assert.ok(existsSync(path), `missing agent: ${file}`)
-    const frontmatter = parseFrontmatter(readFileSync(path, 'utf8'))
-    assert.ok(frontmatter, `${file}: no frontmatter block`)
-    assert.equal(frontmatter.name, file.replace(/\.md$/, ''))
-    assert.ok(frontmatter.description?.length > 0, `${file}: description must not be empty`)
-    // OpenCode routes to other vendors; Claude Code only accepts these tiers.
-    assert.ok(
-      ['haiku', 'sonnet', 'opus'].includes(frontmatter.model),
-      `${file}: model must be a Claude Code tier, got "${frontmatter.model}"`,
-    )
-    assert.equal(frontmatter.mode, undefined, `${file}: "mode" is OpenCode-only, drop it`)
-  }
-})

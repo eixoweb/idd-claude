@@ -1,55 +1,37 @@
 import { parse } from 'yaml'
 
-export const ALL_DIMENSIONS = ['spec', 'runtime', 'code', 'visual', 'mutation', 'acceptance']
+// The dimensions a script measures. `spec` and `code` are not here on purpose:
+// they are judged, once, in /idd:verify, and a judgement has no switch — see
+// docs/dimensions.md.
+export const ALL_DIMENSIONS = ['runtime', 'visual', 'mutation', 'acceptance']
 
-// spec and code need no infrastructure — the evaluator scores them from the
-// diff and the review — so there is no legitimate reason to switch them off.
-const ALWAYS_ON = ['spec', 'code']
-
-const DEFAULT_FLOORS = {
-  spec: 80,
-  runtime: 100,
-  code: 60,
-  visual: 100,
-  mutation: 70,
-  acceptance: 100,
-}
+const DEFAULT_MUTATION_THRESHOLD = 70
 
 export function readVerification(configSource) {
   const config = parse(String(configSource)) ?? {}
   const v = config.verification ?? {}
 
-  const floors = { ...DEFAULT_FLOORS }
-  for (const [dimension, value] of Object.entries(v.floors ?? {})) {
-    if (!ALL_DIMENSIONS.includes(dimension)) {
-      throw new Error(`unknown dimension "${dimension}" in verification.floors`)
-    }
-    if (typeof value !== 'number' || value < 0 || value > 100) {
-      throw new Error(`floor for "${dimension}" must be a number between 0 and 100, got ${value}`)
-    }
-    floors[dimension] = value
-  }
-
-  const enabled = [...ALWAYS_ON]
+  const enabled = []
   // Defaults to on: a project without tests must say so out loud.
   if (v.runtime !== false) enabled.push('runtime')
   if (v.visual) enabled.push('visual')
   if (v.mutation) enabled.push('mutation')
   if (v.spec_as_source) enabled.push('acceptance')
 
-  return {
-    enabled,
-    floors,
-    maxIterations: v.max_iterations ?? 5,
-    // No default here: the right model depends on the tier, which only the
-    // preflight knows. null means "not configured", not "sonnet".
-    evaluatorModel: v.evaluator_model ?? null,
+  const threshold = v.mutation_threshold ?? DEFAULT_MUTATION_THRESHOLD
+  if (typeof threshold !== 'number' || threshold < 0 || threshold > 100) {
+    throw new Error(`verification.mutation_threshold must be 0-100, got ${threshold}`)
   }
+
+  // One threshold, not a table of floors. runtime, visual and acceptance are
+  // pass/fail — a floor of 100 is a boolean wearing a number — and mutation is
+  // the only dimension where a partial score means anything.
+  return { enabled, mutationThreshold: threshold }
 }
 
 /**
- * The project's facts, read once. The preflight and the evaluator dispatch both
- * need the dev stack URL; two readers of the same key is how they drift apart.
+ * The project's facts, read once. Several callers need the dev stack URL; two
+ * readers of the same key is how they drift apart.
  */
 export function readProject(configSource) {
   const project = (parse(String(configSource)) ?? {}).project ?? {}

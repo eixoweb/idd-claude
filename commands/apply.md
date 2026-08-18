@@ -1,9 +1,13 @@
 ---
 name: apply
-description: "Implement a change under enforced TDD, with a scored evaluator gate at the end of each task group"
+description: "Implement a change under enforced TDD, then hand off to /idd:verify"
 ---
 
-Implement the change named in the argument, under hard gates.
+Implement the change named in the argument.
+
+Apply implements. It does not judge its own work: the gate is `/idd:verify`,
+once, at the end. A workflow that reviews itself between every task group ends
+up costing more than the work it guards, and then stops being run at all.
 
 ## Before anything
 
@@ -36,9 +40,9 @@ main checkout while the edits live elsewhere. Say so and work in place.
 
 When `visual` is on, the preflight also returns `devStack`: the command, the
 `url` the assertions are measured against, and whether something is already
-`listening` on it. Start the stack only if it is not, and hand that same URL to
-the evaluator. Do not reconstruct it from the command string — that works for a
-`http.server 8123` and for nothing else.
+`listening` on it. Start the stack only if it is not. Do not reconstruct the URL
+from the command string — that works for a `http.server 8123` and for nothing
+else.
 
 ## Session setup
 
@@ -56,180 +60,41 @@ Dispatch on the keyword **after** the ordinal — never on the ordinal itself.
 | `RED` | write the test, run it, confirm the failure mode matches the description |
 | `GREEN` | minimal code, test green |
 | `REFACTOR` | clean up at constant behaviour; touch no test assertion |
-| `VISUAL` | run the declared assertions through dev-browser |
-| `FIX` | apply the fix from the previous evaluation round |
+| `VISUAL` | make the declared assertions true; check with `visual-cli.mjs` as you go |
 | `ACCEPT` | run the Gherkin scenario (only when spec_as_source is on) |
 
 Dispatch one subagent per task with `superpowers:subagent-driven-development`
-when the tier calls for it (see step 1), otherwise do the work directly.
+when the tier calls for it, otherwise do the work directly.
 
 If subagents are unavailable, fall back to `superpowers:executing-plans` — but
-note that it **does not transitively activate** TDD or code review, so in that
-mode you must invoke the gates explicitly yourself.
+note that it **does not transitively activate** TDD, so in that mode you must
+invoke the gate explicitly yourself.
 
-**NEVER invoke `superpowers:requesting-code-review` directly during apply.**
-The evaluator runs it internally; calling it here pays for the same review
-twice.
-
-## Evaluation
-
-**When to evaluate depends on the tier — the cost of the gate has to be
-proportionate to the change, or it stops being used.**
-
-| | Bounded | Architectural |
-| --- | --- | --- |
-| when | **once, after the last group** | after each group |
-| the evaluator sees | the whole change | that group's diff |
-
-A bounded change is one unit of work. Splitting it into groups organises the
-writing; it is not a reason to pay for the gate twice. Evaluating once covers
-exactly the same code.
-
-For an architectural change, evaluate per group — but **do not idle while the
-verdict comes back.** Dispatch the evaluator in the background and start the
-next group, unless the next group builds on the one being evaluated. When the
-verdict lands:
-
-- `PASS` → nothing to do, carry on.
-- `RETRY` or `BLOCK` → stop the current group, work the fix tasks, re-dispatch.
-  Work done meanwhile is not wasted: it is re-evaluated with its own group.
-
-Only serialise when the groups genuinely depend on each other. Waiting on a
-verdict for an independent group buys nothing and doubles the wall clock.
-
-## Dispatching the evaluator
-
-Use the model the preflight returned as `evaluatorModel` — it resolves
-`verification.evaluator_model` when set, and otherwise follows the tier, because
-the tier is what says how much the gate is worth. Tell the evaluator its tier:
-the payload decides its review depth from it.
-
-**Gather its inputs with one command, and hand over the path it prints.**
+A `VISUAL` task's assertions are checked here for your own feedback, not as the
+gate — `/idd:verify` re-runs every one of them itself. Pass the group's `visual`
+tasks in **one** call, never one call per task:
 
 ```
-node "${CLAUDE_PLUGIN_ROOT}/scripts/evaluator-input-cli.mjs" <change id> <group|""> .
+node "${CLAUDE_PLUGIN_ROOT}/scripts/visual-cli.mjs" '[{"ordinal":"1.3","lines":[...]}]' <devStack url>
 ```
 
-Pass the group number for an architectural change, an empty string for a
-bounded one — it evaluates every group at once. It assembles everything the
-evaluator needs — the tier, the derived base ref, the dev stack URL, the groups
-with their tasks, each VISUAL task's assertion lines ready to pass to
-`visual-cli.mjs`, the spec content, the changed code files and the diff —
-**writes it to `.evaluator-input.json` in the change folder**, and prints a
-short card naming that path.
-
-The diff it assembles **excludes the change's own artifacts**. An evaluator has
-no business re-reading the proposal it measures against, and carrying it
-inflates the payload while diluting the review. The artifact files are listed
-separately in the payload if you need to mention them.
-
-**Run the automatic rule before dispatching anything:**
+## Before handing off
 
 ```
-node "${CLAUDE_PLUGIN_ROOT}/scripts/refactor-guard-cli.mjs" <the card's payload path>
+node "${CLAUDE_PLUGIN_ROOT}/scripts/refactor-guard-cli.mjs" <change id> .
 ```
 
-A REFACTOR task whose diff removes a test assertion is CRITICAL by design. No
-judgement is involved, so it does not need a round trip to reach one: on the run
-that motivated this, the evaluator spent two and a half minutes returning a
-verdict a millisecond of script returns. On a non-zero exit, treat it exactly as
-a `BLOCK` — record the round, work the findings, re-run the guard — and dispatch
-only once it is clean.
+A REFACTOR task whose diff removes a test assertion is CRITICAL by design.
+Weakening an assertion under cover of cleanup makes the suite agree with
+whatever the code now does, and a diff shows it outright — so no judgement is
+involved and none is asked for. On a non-zero exit, work the findings and re-run
+it. Do not hand off until it is clean.
 
-It is a guard, not a replacement: it recognises tests by convention, so the
-evaluator still applies the same rule to what the convention misses.
-
-**Dispatch the card's `payload` path — never the payload itself.** Transcribing
-that JSON into the Task prompt is thousands of output tokens spent before the
-evaluator has started, and it grows with the diff: the bigger the change, the
-longer the wait before anything is reviewed. The card is there so you can say
-what you are dispatching without reciting it.
-
-Its charter is that it receives only the contract, the specs and the diff and
-does not go looking — a charter the dispatch has to make true, not merely
-assert. One prepared file is not going looking; a tour of the codebase is. Give
-it the paths it must *run* — the CLIs — and the one path it must *read*.
-
-Then act on the verdict:
-
-**On a bounded change, there is no loop.** Record the round, then:
-
-- `PASS` → done.
-- `RETRY` or `BLOCK` → **stop and report**: the findings, the fix tasks the
-  evaluator generated, and what it scored. **Do not re-dispatch**, and do not
-  work the fixes unattended. One unit of work is settled faster by a human
-  reading two findings than by a second dispatch costing minutes, and the
-  judgement of whether a finding is worth acting on is theirs.
-
-On an architectural change, the loop stands — the work is large enough that
-serialising a human into every round costs more than the round does:
-
-- `PASS` → next group.
-- `RETRY` → append the fix tasks it generated to `tasks.md` and work them, then
-  re-dispatch **incrementally**. Stop at `verification.max_iterations` and
-  report to the user.
-- `BLOCK` → fix the reported CRITICAL/HIGH findings, or the infrastructure
-  problem, before re-dispatching. Do not count a BLOCK as an iteration of the
-  RETRY loop: it is not a code-quality failure.
-
-### Re-dispatching after a fix
-
-A fix round is not a fresh evaluation. Most of the group is provably untouched,
-and re-running everything is what makes a gate too slow to keep using.
-
-Ask which dimensions the fix could have reached — do not decide it yourself:
-
-```
-node "${CLAUDE_PLUGIN_ROOT}/scripts/verdict-cli.mjs" openspec/config.yaml \
-  '<scores so far>' openspec/changes/<id>/tasks.md <group> \
-  '<group changed files>' '<files the fix touched>'
-```
-
-It returns a `recheck` list. Dispatch the evaluator with:
-
-- the findings it must re-verify — always, that is the point of the round;
-- the **fix diff**, not the whole group diff, for the review;
-- only the dimensions in `recheck`. Carry the others forward at their previous
-  scores, and say in the report that they were carried, not re-measured.
-
-`runtime` is always in the list and always re-runs. It costs seconds and
-catches damage anywhere, which is what makes skipping the expensive local
-dimensions safe rather than optimistic.
-
-### Record every round
-
-```
-node "${CLAUDE_PLUGIN_ROOT}/scripts/record-round-cli.mjs" <change id> '<round as JSON>' .
-```
-
-Run it after **every** verdict, including a `BLOCK` — especially a `BLOCK`, which
-is where a reader most wants to know what happened. The round is
-`{group, attempt, status, scores, applicable, carried, findings, fixTasks}`.
-
-This is the audit trail: what a reviewer reads in the PR instead of taking a
-`PASS` on trust. A run that produced rounds and recorded none of them has
-verified nothing anyone else can check — which is why it is a command rather
-than a line the prompt hopes you follow.
+It is a guard, not a review: it recognises tests by convention, and everything
+it cannot see is what `/idd:verify` is for.
 
 ## End of the change
 
-Invoke `superpowers:verification-before-completion` — but do not read it as an
-order to re-measure what the gate just measured. The evaluator ran the test
-commands and re-ran every VISUAL assertion itself, minutes ago. Ask first
-whether anything it measured has moved:
-
-```
-git diff --name-only <the payload's `head`>..HEAD -- ':!openspec/'
-```
-
-- **Empty** — no code changed since the evaluation; only `verification.md` and
-  `tasks.md` moved, which this tooling excludes from review as paperwork. The
-  verdict stands: report it as **carried, not re-measured**, and say so.
-- **Non-empty** — something really did change after the gate. Name the files and
-  re-run the dimensions they could have reached.
-
-The evidence the skill asks for is the diff being empty. Re-running a green
-suite to watch it be green again is not evidence, it is ceremony — and it is the
-one case the check cannot fail, so it proves nothing that the emptiness does not.
-
-Then hand off to `/idd:verify`.
+Every checkbox ticked, the guard clean, the working tree committed. Then hand
+off to `/idd:verify` — and let it do the verifying. Do not pre-run its
+dimensions here to see whether it will pass.

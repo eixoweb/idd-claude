@@ -20,16 +20,7 @@ verification:
   runtime: true                # set to false only for a project with no test suite
   visual: true                 # dev-browser gate
   mutation: false              # mutation testing - off by default
-  floors:                      # a dimension below its floor -> RETRY
-    spec: 80
-    runtime: 100
-    visual: 100
-    code: 60
-    mutation: 70
-    acceptance: 100
-  max_iterations: 5
-  evaluator_model: sonnet
-
+  mutation_threshold: 70       # the only partial score that means anything
 project:
   dev_stack_command: ""
   dev_stack_url: ""        # required when visual: true, e.g. http://localhost:5173
@@ -66,7 +57,7 @@ the project: the tier is chosen per change and recorded in the change's own
 `spec_as_source` does double duty on purpose: it is the single source of truth
 for the executable-spec workflow. The upstream template expressed the same
 activation as a commented prose line in `rules:`, which is enough to steer
-drafting but not enough to make an evaluator branch. One boolean, no drift.
+drafting but not enough to make a verification step branch. One boolean, no drift.
 
 ### What is deliberately not here
 
@@ -77,37 +68,20 @@ project config answers a per-change question in the wrong place, and adds two
 knobs that have to be revisited every time the work changes shape.
 
 The config holds project *facts* (`runtime`, `visual`) and *policy*
-(`mutation`, `spec_as_source`, floors, iteration cap, evaluator model). Nothing
+(`mutation`, `spec_as_source`, the mutation threshold). Nothing
 that varies per change belongs in it.
 
-### `floors`
+### `mutation_threshold`
 
-A map of dimension → minimum score, 0 to 100. Any dimension below its floor
-returns `RETRY`.
+The mutation score, 0 to 100, below which `/idd:verify` fails. Default 70.
 
-Validation is strict and fails loudly: an unknown dimension name, or a value
-outside 0–100, throws with the offending key named. Omitted dimensions fall
-back to the defaults above.
+It replaced a table of per-dimension floors. `runtime`, `visual` and
+`acceptance` had floors of 100 — a floor of 100 is a boolean wearing a number,
+since any failure fails — and `spec` and `code` had floors only because a scored
+evaluator emitted numbers for them. Those two are judged now, in prose, once.
+Mutation is the one dimension where a partial score means something.
 
-### `max_iterations`
-
-Cap on the RETRY loop for a single group, default 5. Reaching it stops the run
-and reports to the user. `BLOCK` verdicts do not count toward it.
-
-### `evaluator_model`
-
-`haiku`, `sonnet` or `opus`. Read by the preflight and passed to the evaluator
-at dispatch, overriding the model in the agent's own frontmatter.
-
-**Left unset, it follows the tier**: `haiku` on a bounded change, `sonnet` on an
-architectural one. Economising on a safeguard is the wrong trade in general —
-but the tier is exactly the signal for how much the safeguard is worth. A
-bounded change is one unit of work reviewed in a single pass; measured, an
-architectural-grade evaluator spent 8.3 minutes guarding 8.7 minutes of
-implementation, which is the failure this design names out loud.
-
-Set it explicitly to override, on either tier. Raise it to `opus` on a codebase
-where a missed finding is expensive.
+Out of range, or not a number, throws with the offending value named.
 
 ## `project`
 
@@ -123,7 +97,7 @@ The origin the visual assertions are measured against, e.g.
 `http://localhost:5173` or `https://project.ddev.site`. Required when
 `visual: true`, and declared rather than derived: a URL inferred from the
 command works for `python3 -m http.server 8123` and for no real dev stack. It
-is what the preflight probes and what the evaluator is handed at dispatch.
+is what the preflight probes and what `/idd:verify` measures against.
 
 ### `test_commands`
 

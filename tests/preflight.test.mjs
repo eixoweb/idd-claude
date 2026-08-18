@@ -115,19 +115,3 @@ test('visual off means there is no dev stack to report', () => {
   assert.equal(r.ok, true)
   assert.equal(r.devStack, null)
 })
-
-test('a bounded change is evaluated by a cheaper model than an architectural one', () => {
-  // The gate has to cost less than the unit of work it guards: 8.3 minutes of
-  // evaluator against 8.7 of implementation is the failure this design names.
-  assert.equal(preflight(base).evaluatorModel, 'haiku')
-  assert.equal(preflight({ ...base, schema: 'idd-claude' }).evaluatorModel, 'sonnet')
-})
-
-test('a configured evaluator model beats the tier default', () => {
-  const r = preflight({
-    ...base,
-    config:
-      'verification:\n  visual: true\n  evaluator_model: opus\nproject:\n  dev_stack_command: "x"\n  dev_stack_url: "http://l:1"\n  test_commands: ["t"]\n',
-  })
-  assert.equal(r.evaluatorModel, 'opus')
-})

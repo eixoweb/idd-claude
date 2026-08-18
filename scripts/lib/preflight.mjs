@@ -10,11 +10,6 @@ const SHAPE = {
   architectural: { worktree: true, subagents: true },
 }
 
-// The gate has to cost less than the work it guards. A bounded change is one
-// unit of work reviewed in one pass; paying an architectural model for it is how
-// an 8-minute evaluator ends up guarding 8 minutes of implementation. An
-// explicit verification.evaluator_model always wins — this is only the default.
-const TIER_MODEL = { bounded: 'haiku', architectural: 'sonnet' }
 
 /**
  * Everything /idd:apply must know before it starts, decided here rather than
@@ -23,7 +18,7 @@ const TIER_MODEL = { bounded: 'haiku', architectural: 'sonnet' }
  * one command with one answer.
  */
 export function preflight({ config, schema, tools }) {
-  const { enabled, evaluatorModel } = readVerification(config)
+  const { enabled } = readVerification(config)
   const project = readProject(config)
 
   const refusals = []
@@ -73,7 +68,6 @@ export function preflight({ config, schema, tools }) {
     notes,
     enabled,
     tier: tier ?? null,
-    evaluatorModel: evaluatorModel ?? (tier ? TIER_MODEL[tier] : null),
     // Reported, not left to be rediscovered: a run that has to find out whether
     // the stack is up improvises a port probe, and improvises it differently
     // every time.
