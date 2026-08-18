@@ -25,3 +25,32 @@ export function readMutationScore(report) {
   if (scorable === 0) return UNKNOWN
   return Math.round((100 * detected) / scorable)
 }
+
+// Stryker has no --since: diff scoping is done by passing --mutate the files
+// to mutate. Which files those are depends on what the diff touched.
+const TEST_FILE = /(^|\/)tests?\/|\.(test|spec)\.[cm]?[jt]sx?$/
+
+function globToRegExp(glob) {
+  const escaped = glob.replace(/[.+^${}()|[\]\\]/g, '\\$&')
+  // ** crosses directories, * stops at one.
+  const pattern = escaped.replace(/\*\*\//g, '§').replace(/\*/g, '[^/]*').replace(/§/g, '(?:.*/)?')
+  return new RegExp(`^${pattern}$`)
+}
+
+/**
+ * - Source files changed -> mutate exactly those.
+ * - Only tests changed -> full run. Scoping would leave nothing to mutate,
+ *   which is precisely the change where the score is the deliverable.
+ * - Neither -> nothing to measure.
+ */
+export function chooseMutationScope(changedFiles, mutateGlobs) {
+  const matchers = mutateGlobs.map(globToRegExp)
+  const files = (changedFiles ?? []).map(String)
+
+  const mutate = files.filter((file) => matchers.some((re) => re.test(file)))
+  if (mutate.length > 0) return { mode: 'scoped', mutate }
+
+  if (files.some((file) => TEST_FILE.test(file))) return { mode: 'full', mutate: [] }
+
+  return { mode: 'none', mutate: [] }
+}

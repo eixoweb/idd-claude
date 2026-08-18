@@ -1,6 +1,6 @@
 import { test } from 'vitest'
 import assert from 'node:assert/strict'
-import { readMutationScore } from '../scripts/lib/mutation.mjs'
+import { chooseMutationScope, readMutationScore } from '../scripts/lib/mutation.mjs'
 
 const report = (statuses) => ({
   files: {
@@ -46,4 +46,44 @@ test('mutants are counted across every file', () => {
     },
   }
   assert.equal(readMutationScore(multi), 50)
+})
+
+// ---- Choosing what to mutate for a given diff ----
+
+const GLOBS = ['scripts/lib/**/*.mjs']
+
+test('a diff touching source files mutates exactly those', () => {
+  const scope = chooseMutationScope(['scripts/lib/visual.mjs', 'README.md'], GLOBS)
+  assert.equal(scope.mode, 'scoped')
+  assert.deepEqual(scope.mutate, ['scripts/lib/visual.mjs'])
+})
+
+test('a test-only diff falls back to a full run', () => {
+  // Scoping to changed source files would leave nothing to mutate — exactly
+  // when the mutation score is the deliverable.
+  const scope = chooseMutationScope(['tests/visual-parse.test.mjs'], GLOBS)
+  assert.equal(scope.mode, 'full')
+})
+
+test('a diff touching neither source nor tests has nothing to measure', () => {
+  const scope = chooseMutationScope(['README.md', 'docs/workflow.md'], GLOBS)
+  assert.equal(scope.mode, 'none')
+})
+
+test('a test file is recognised by name or by directory', () => {
+  for (const file of ['tests/a.test.mjs', 'src/a.spec.js', 'tests/fixtures/b.mjs']) {
+    assert.equal(chooseMutationScope([file], GLOBS).mode, 'full', `${file} should read as a test`)
+  }
+})
+
+test('the double star crosses directories, the single star does not', () => {
+  assert.equal(chooseMutationScope(['scripts/lib/deep/a.mjs'], GLOBS).mode, 'scoped')
+  assert.equal(chooseMutationScope(['scripts/lib/a.mjs'], ['scripts/lib/*.mjs']).mode, 'scoped')
+  assert.equal(chooseMutationScope(['scripts/lib/deep/a.mjs'], ['scripts/lib/*.mjs']).mode, 'none')
+})
+
+test('a source file and a test file together still scope to the source', () => {
+  const scope = chooseMutationScope(['scripts/lib/verdict.mjs', 'tests/verdict.test.mjs'], GLOBS)
+  assert.equal(scope.mode, 'scoped')
+  assert.deepEqual(scope.mutate, ['scripts/lib/verdict.mjs'])
 })
