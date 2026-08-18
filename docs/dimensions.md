@@ -103,7 +103,8 @@ file types — a diff touching templates or stylesheets ought to require a
 The evaluator produces scores. It does **not** decide the verdict — it calls:
 
 ```bash
-node "${CLAUDE_PLUGIN_ROOT}/scripts/verdict-cli.mjs" openspec/config.yaml '<scores as JSON>'
+node "${CLAUDE_PLUGIN_ROOT}/scripts/verdict-cli.mjs" \
+  openspec/config.yaml '<scores as JSON>' openspec/changes/<id>/tasks.md <group>
 ```
 
 A model that arbitrates its own grade is a model that can negotiate with it.
