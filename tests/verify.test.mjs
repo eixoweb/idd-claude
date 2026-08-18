@@ -34,3 +34,37 @@ test('mutation is judged against its threshold, not against perfection', () => {
   assert.equal(scriptVerdict(d({ mutation: { status: 'PASS', score: 72 } })), 'PASS')
   assert.equal(scriptVerdict(d({ mutation: { status: 'FAIL', score: 40 } })), 'FAIL')
 })
+
+// ---- The gate cannot be escaped by declaring nothing ----
+
+import { visualCoverageWarning } from '../scripts/lib/verify.mjs'
+
+const groups = (types) => [{ number: 1, title: 'g', tasks: types.map((t) => ({ type: t })) }]
+
+test('touching a stylesheet without declaring a VISUAL task is reported', () => {
+  // Otherwise the visual gate is only as strong as the diligence of whoever
+  // wrote tasks.md: declare nothing, and there is nothing to fail.
+  const w = visualCoverageWarning(groups(['GREEN']), ['src/app.js', 'styles/main.css'])
+  assert.match(w, /styles\/main\.css/)
+  assert.match(w, /no VISUAL task/i)
+})
+
+test('a declared VISUAL task silences it', () => {
+  assert.equal(visualCoverageWarning(groups(['GREEN', 'VISUAL']), ['styles/main.css']), null)
+})
+
+test('code that renders nothing raises nothing', () => {
+  assert.equal(visualCoverageWarning(groups(['GREEN']), ['src/app.js', 'README.md']), null)
+})
+
+test('templates count as rendering, not just stylesheets', () => {
+  for (const f of ['a.html', 'a.tsx', 'a.vue', 'a.svelte', 'a.blade.php', 'a.twig']) {
+    assert.ok(visualCoverageWarning(groups(['GREEN']), [f]), `${f} should be flagged`)
+  }
+})
+
+test('it warns and never fails, because it cannot tell a lint fix from a redesign', () => {
+  // A gate that cannot tell the difference gets routed around by whoever it
+  // inconveniences. Detection is deterministic; the judgement stays human.
+  assert.equal(scriptVerdict({ visual: { status: 'PASS', warning: 'x' } }), 'PASS')
+})

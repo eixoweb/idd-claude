@@ -140,3 +140,112 @@ diff --git a/tests/b.test.mjs b/tests/b.test.mjs
   assert.equal(r.blocked, true)
   assert.deepEqual(r.findings.map((f) => f.file), ['tests/b.test.mjs'])
 })
+
+// ---- The two regexes are the whole guard: pin every branch ----
+
+const removal = (file, line) =>
+  diff(`
+diff --git a/${file} b/${file}
+--- a/${file}
++++ b/${file}
+@@ -1,2 +1,1 @@
+-${line}
+`)
+
+test('a test file is recognised by directory or by suffix, not by one convention', () => {
+  const paths = [
+    'test/a.js',
+    'tests/a.js',
+    'src/__tests__/a.js',
+    'spec/a.rb',
+    'a.test.js',
+    'a.test.mjs',
+    'a.test.cjs',
+    'a.test.ts',
+    'a.test.tsx',
+    'a.spec.jsx',
+    'deep/nested/b.spec.ts',
+    'a_test.py',
+  ]
+  for (const p of paths) {
+    const r = guardRefactor(payload(refactorGroup, removal(p, '  assert.equal(x, 1)')))
+    assert.equal(r.blocked, true, `${p} should count as a test file`)
+  }
+})
+
+test('a path that merely contains the word test is not a test file', () => {
+  // `attestation.js` and `src/latest/a.js` are production code.
+  for (const p of ['src/attestation.js', 'src/latest/a.js', 'contest.js']) {
+    const r = guardRefactor(payload(refactorGroup, removal(p, '  assert.equal(x, 1)')))
+    assert.equal(r.blocked, false, `${p} must not count as a test file`)
+  }
+})
+
+test('each assertion vocabulary is recognised', () => {
+  const lines = [
+    'assert.equal(a, b)',
+    'expect(a).toBe(b)',
+    'a.should.equal(b)',
+    'chai.assert(a)',
+    't.is(a, b)',
+    't.deepEqual(a, b)',
+    't.truthy(a)',
+    't.throws(fn)',
+  ]
+  for (const line of lines) {
+    const r = guardRefactor(payload(refactorGroup, removal('tests/a.test.mjs', `  ${line}`)))
+    assert.equal(r.blocked, true, `${line} should read as an assertion`)
+  }
+})
+
+test('setup and teardown removed under cleanup are not assertions', () => {
+  for (const line of ['  const x = 1', '  beforeEach(() => {})', '  await page.goto(url)']) {
+    const r = guardRefactor(payload(refactorGroup, removal('tests/a.test.mjs', line)))
+    assert.equal(r.blocked, false, `${line} must not read as an assertion`)
+  }
+})
+
+test('the restoration match ignores spacing and quote style, and nothing else', () => {
+  const requoted = diff(`
+diff --git a/tests/a.test.mjs b/tests/a.test.mjs
+--- a/tests/a.test.mjs
++++ b/tests/a.test.mjs
+@@ -1,2 +1,2 @@
+-  assert.equal(label(1),   'x')
++\tassert.equal(label(1), \`x\`)
+`)
+  assert.equal(guardRefactor(payload(refactorGroup, requoted)).blocked, false)
+
+  const changedArgument = diff(`
+diff --git a/tests/a.test.mjs b/tests/a.test.mjs
+--- a/tests/a.test.mjs
++++ b/tests/a.test.mjs
+@@ -1,2 +1,2 @@
+-  assert.equal(label(1), 'x')
++  assert.equal(label(2), 'x')
+`)
+  assert.equal(guardRefactor(payload(refactorGroup, changedArgument)).blocked, true)
+})
+
+test('an added-file header is not read as an added assertion', () => {
+  // `+++ b/path` starts with a plus; counting it as content would let a header
+  // cancel a real removal.
+  const r = guardRefactor(payload(refactorGroup, removal('tests/a.test.mjs', '  assert.ok(x)')))
+  assert.equal(r.blocked, true)
+  assert.equal(r.findings.length, 1)
+})
+
+test('with several cleanup groups the responsible one is not guessed', () => {
+  const two = [
+    { number: 1, title: 'a', tasks: [{ ordinal: '1.4', type: 'REFACTOR', description: '' }] },
+    { number: 2, title: 'b', tasks: [{ ordinal: '2.3', type: 'REFACTOR', description: '' }] },
+  ]
+  const r = guardRefactor(payload(two, removal('tests/a.test.mjs', '  assert.ok(x)')))
+  assert.equal(r.findings[0].group, null, 'ambiguous attribution must be stated, not picked')
+  assert.deepEqual(r.findings[0].refactorTasks, ['1.4', '2.3'])
+})
+
+test('a group whose tasks are missing entirely does not crash the guard', () => {
+  assert.equal(guardRefactor({ groups: [{ number: 1 }], diff: WEAKENED }).blocked, false)
+  assert.equal(guardRefactor({}).blocked, false)
+})

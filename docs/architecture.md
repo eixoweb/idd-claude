@@ -9,14 +9,13 @@ For anyone modifying the plugin. If you only want to *use* it, read
 idd-claude/
 ├── .claude-plugin/          plugin.json (version drives drift detection), marketplace.json
 ├── commands/               explore, propose, apply, verify, archive, init
-├── agents/                  evaluator, adversarial-author, adversarial-reviewer
-├── skills/                  10 skills — 9 ported from upstream, plus visual-verification
+├── skills/                  9 skills — 8 ported from upstream, plus visual-verification
 ├── schema/                  the full OpenSpec schema + templates
 ├── schema-lite/             the bounded schema + templates
 ├── scripts/
 │   ├── lib/                 all the logic, unit-tested
 │   └── *-cli.mjs            thin shells that spawn external tools
-├── tests/                   20 files, 183 tests
+├── tests/                   23 files, 214 tests
 └── docs/superpowers/        design specs and implementation plans (French)
 ```
 
@@ -40,8 +39,10 @@ Verify packaging without publishing:
 claude --plugin-dir . plugin details idd
 ```
 
-It should report 16 skills — ten real skills plus the six commands, which that
-inventory labels as skills too.
+It should report 15 skills — nine real skills plus the six commands, which that
+inventory labels as skills too. There are no agents: the workflow delegates its
+one independent opinion to `superpowers:requesting-code-review` rather than
+shipping a reviewer of its own.
 
 ## The one structural rule
 
@@ -52,13 +53,13 @@ in `scripts/`.**
 | --- | --- | --- |
 | `config.mjs` | | |
 | `tasks.mjs` | `tasks-cli.mjs` | — |
-| `verdict.mjs` | `verdict-cli.mjs` | — |
 | `visual.mjs` | `visual-cli.mjs` | dev-browser |
 | `mutation.mjs` | `mutation-cli.mjs` | stryker |
 | `acceptance.mjs` | `acceptance-cli.mjs` | extractor, cucumber-js |
-| `preflight.mjs` | `preflight-cli.mjs` | `which` |
-| `evaluator-input.mjs` | `evaluator-input-cli.mjs` | git |
-| `round-record.mjs` | `record-round-cli.mjs` | — |
+| `preflight.mjs` | `preflight-cli.mjs` | `which`, a TCP probe |
+| `refactor-guard.mjs` | `refactor-guard-cli.mjs` | git |
+| `verify.mjs` | `verify-cli.mjs` | the test commands, dev-browser, stryker, cucumber |
+| `change-diff.mjs` | | git |
 | `promote-schema.mjs`, `openspec-version.mjs`, `frontmatter.mjs` | `promote.mjs` | openspec |
 
 The split is why the interesting parts are testable without fixtures or
@@ -77,16 +78,22 @@ available, an agent was free to check it by running it, which starts a daemon.
 121 ms of `preflight-cli.mjs` replaced it, and the answer is now identical every
 time.
 
-The same reasoning already applies to the verdict, to dimension applicability,
-to the mutation scope, to the recheck list, and to gathering the evaluator's
-inputs — which had been two hand-composed git diffs, one redundant with the
-other, over a base ref the agent guessed. The rule generalises: **if the answer
-is derivable, derive it — the prompt is for judgement, not evaluation.**
+The same reasoning applies to the verdict over the measured dimensions, to the
+mutation scope, to the visual coverage warning, and to the REFACTOR rule — which
+had been a line of prose the reviewing agent was asked to apply "automatically",
+and which cost a 148-second dispatch to reach a verdict `refactor-guard-cli.mjs`
+returns in 37 ms. The rule generalises: **if the answer is derivable, derive it —
+the prompt is for judgement, not evaluation.**
 
-A corollary worth stating: the payload matters as much as the call. The gathered
-diff excludes the change's own `openspec/` artifacts, because an evaluator has
-no business re-reading the proposal it measures against — on the trial change
-that is nine files of paperwork dropped and a 123-line code diff left.
+The corollary is about batching. Four scripts invoked one at a time cost four
+tool round trips, each worth far more than the script it wraps: four visual
+probes measured 2990 ms sequential against 2224 ms in one session, while the
+round trips around them cost tens of seconds each. `verify-cli.mjs` runs every
+mechanical dimension in one call for that reason, not for the milliseconds.
+
+`change-diff.mjs` is the single derivation of what a change contains — base,
+head, and the code diff with the change's own `openspec/` paperwork excluded.
+Everything downstream reads it, so there is no second opinion about the subject.
 
 ## Prompts are tested structurally
 
@@ -94,7 +101,7 @@ Commands and agents are Markdown prompts; they cannot be unit-tested. Instead,
 tests assert that the design rules are *present in the text*:
 
 ```js
-assert.match(apply, /NEVER invoke `superpowers:requesting-code-review` directly/)
+assert.doesNotMatch(apply, /evaluator|RETRY|BLOCK\b/)
 assert.doesNotMatch(schema.apply.instruction, /work through pending tasks/)
 ```
 
@@ -112,12 +119,12 @@ so a paragraph rewrap never breaks a test.
 
 Four independent paths converge on one literal string:
 
-- `visual-cli.mjs` → `{score: "UNKNOWN"}` when the dev stack is unreachable
+- `verify-cli.mjs` → `status: "UNKNOWN"` when the dev stack is unreachable
 - `mutation.mjs` → `UNKNOWN` when no mutant is scorable
 - `acceptance.mjs` → `UNKNOWN` when no scenario ran
-- a missing score for an enabled dimension
+- any dimension whose tool would not run
 
-`computeVerdict` treats all of them identically and returns `BLOCK`. No
+`scriptVerdict` treats all of them identically and returns `BLOCKED`. No
 conversion anywhere. If you add a dimension, emit the same string.
 
 ## Two schemas, one source
@@ -148,19 +155,25 @@ identical either way.
 
 ## Ported from upstream
 
-Nine skills and the two adversarial agents come from
-intent-driven-template's `.agents/skills/` and `.opencode/agent/`. Their
-frontmatter was already in Claude Code's format; only paths and agent
-frontmatter changed. `skills-lock.json` pins `grill-me`, itself vendored from
-mattpocock.
+Eight skills come from intent-driven-template's `.agents/skills/`. Their
+frontmatter was already in Claude Code's format; only paths changed.
+`skills-lock.json` pins `grill-me`, itself vendored from mattpocock.
 
 `tests/skills-conformance.test.mjs` asserts every skill's frontmatter `name`
 matches its directory and that no OpenCode path survives.
 
-**One capability was lost in the port.** Upstream ran the adversarial author
-and reviewer on different model families, so a draft was challenged from
-genuinely outside. Claude Code routes to a single vendor: it is a second pass,
-not a second perspective. The reviewer's own prompt says so.
+**The adversarial council was ported and then removed.** Upstream runs an author
+and a reviewer on different model families, so a draft is challenged from
+genuinely outside. Claude Code routes to a single vendor, which makes it a
+second pass rather than a second perspective — and it sat on top of OpenSpec's
+own artifact generation, so it was a second author for something that already
+had one. Wired onto `/idd:propose` it roughly doubled the cost of drafting, for
+a challenge the reviewer's own prompt admits is not independent. The skill and
+both agents are gone.
+
+Where the upstream design still holds is placement: it reviews the intent and
+implements freely. That is why the gate here is `/idd:verify` and not something
+sitting between task groups.
 
 ## Test harness
 
@@ -169,26 +182,33 @@ happened for one reason: Stryker drives vitest natively and cannot drive
 `node --test`.
 
 ```bash
-npm test                          # 183 tests, ~2s
+npm test                          # 214 tests, ~2s
 ./node_modules/.bin/stryker run   # mutation score, ~20s
 ```
 
-Current mutation score: **81%**, no file below 70. The weakest are
-`frontmatter.mjs` and `tasks.mjs` at 72 — the next worthwhile targets. Open
-`reports/mutation/index.html` after a run to see annotated source.
+Current mutation score: **79.6%**, no file below 70. The weakest are
+`tasks.mjs` at 71.8 and `frontmatter.mjs` at 72.2 — the next worthwhile targets.
+Open `reports/mutation/index.html` after a run to see annotated source.
+
+`refactor-guard.mjs` is worth a word: it landed at 67, below the threshold this
+project sets for others, which matters more there than elsewhere — it is the
+deterministic check the whole gate leans on. Pinning every branch of its two
+regexes took it to 76.7. A guard whose own tests are weak is a guard nobody
+should trust.
 
 ## Adding a dimension
 
-1. Add it to `ALL_DIMENSIONS` and `DEFAULT_FLOORS` in `config.mjs`, and to the
-   enabling logic in `readVerification`.
-2. Write the pure scorer in `scripts/lib/`, returning a number **or**
+1. Add it to `ALL_DIMENSIONS` in `config.mjs`, and to the enabling logic in
+   `readVerification`.
+2. Write the pure scorer in `scripts/lib/`, returning a status **or**
    `'UNKNOWN'`.
 3. Write the shell in `scripts/`, which must catch tool failure and emit
-   `UNKNOWN` rather than 0.
-4. Add a step to `agents/evaluator.md` pointing at the shell, and a
-   pre-flight check in `commands/apply.md` that refuses to start when the
-   dimension is enabled but unevaluable.
-5. Add the key to `defaultConfig()` and to the verification templates.
+   `UNKNOWN` rather than a failing score.
+4. Run it from `verify-cli.mjs` — in the same call as the others, not as a
+   separate command — and add a refusal in `lib/preflight.mjs` so a dimension
+   that is enabled but unevaluable stops the run at the start rather than at
+   the end.
+5. Add the key to `defaultConfig()` and document it in `configuration.md`.
 
 Step 3 is where the mistakes happen. A tool exiting non-zero does not always
 mean infrastructure failure — cucumber-js exits non-zero on *failing

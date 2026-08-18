@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url'
 import { changeDiff } from './lib/change-diff.mjs'
 import { readProject, readVerification } from './lib/config.mjs'
 import { parseTasks } from './lib/tasks.mjs'
-import { scriptVerdict } from './lib/verify.mjs'
+import { scriptVerdict, visualCoverageWarning } from './lib/verify.mjs'
 import { buildProbeScript, evaluateVisualBatch, parseVisualSpec } from './lib/visual.mjs'
 
 const [changeId, projectRoot = process.cwd()] = process.argv.slice(2)
@@ -52,9 +52,10 @@ if (enabled.includes('visual')) {
     group.tasks.filter((task) => task.type === 'VISUAL').map((task) => task),
   )
   if (tasks.length === 0) {
-    // No VISUAL task and a visual dimension switched on is worth saying: the
-    // change went through no visual gate at all, PASS or not.
-    dimensions.visual = { status: 'PASS', note: 'no VISUAL task in this change' }
+    // No VISUAL task is not a pass by omission: say whether the change rendered
+    // anything it made no claim about.
+    const warning = visualCoverageWarning(groups, changeDiff(changeId, projectRoot).changedFiles)
+    dimensions.visual = { status: 'PASS', note: 'no VISUAL task in this change', warning }
   } else {
     const specs = tasks.map((t) => ({ ...parseVisualSpec(t.lines), ordinal: t.ordinal }))
     try {

@@ -1,225 +1,148 @@
-# Dimensions and verdicts
+# Dimensions and the verdict
 
-An evaluator subagent scores the work on up to six independent dimensions, then
-a verdict is computed **outside the model**. It runs once per change on a
-bounded tier and once per group on an architectural one — see
-[workflow.md](workflow.md).
+`/idd:verify` is the workflow's only gate. It asks two different kinds of
+question, and keeping them apart is the whole design:
 
-## The six dimensions
+- **What a script can measure** — does the suite pass, do the assertions hold,
+  do the mutants die, do the scenarios run. Measured by `verify-cli.mjs`, in one
+  command, with the verdict over them computed outside the model.
+- **What only a reading can settle** — is this the code the change asked for.
+  Judged once, in prose, at the end.
 
-| Dimension | Measures | Enabled by | Default floor |
+## The measured dimensions
+
+| Dimension | Measures | Enabled by | Passes when |
 | --- | --- | --- | --- |
-| `spec` | proportion of the contract's SHALL statements the diff satisfies | always on | 80 |
-| `code` | residual MEDIUM/LOW findings from the code review | always on | 60 |
-| `runtime` | the project's test suite | `runtime` (default `true`) | 100 |
-| `visual` | measured dev-browser assertions | `visual` (default `true`) | 100 |
-| `mutation` | Stryker score on the group's changed files | `mutation` (default `false`) | 70 |
-| `acceptance` | cucumber-js scenarios | `spec_as_source` (default `false`) | 100 |
+| `runtime` | the project's test suite | `runtime` (default `true`) | every command exits clean |
+| `visual` | declared dev-browser assertions | `visual` (default `true`) | every assertion holds |
+| `mutation` | Stryker score on the change's files | `mutation` (default `false`) | at or above `mutation_threshold` |
+| `acceptance` | cucumber-js scenarios | `spec_as_source` (default `false`) | every scenario passes |
 
-`spec` and `code` cannot be switched off: they need no infrastructure — the
-evaluator scores them from the diff and the review — so there is no legitimate
-reason to.
+Three of the four are pass/fail. That is why there is **one** threshold in the
+config rather than a table of floors: a floor of 100 is a boolean wearing a
+number, and mutation is the only dimension where a partial score means
+anything.
 
-## Floors, not a weighted average
+### Why not a weighted average
 
-A single dimension below its floor returns `RETRY`, whatever the others say.
+An average lets a weak dimension be redeemed by strong ones. A change scoring
+runtime 100 / visual 60 would total well above any sensible threshold while four
+assertions out of ten fail and the rendering is wrong. That is precisely the
+false positive this project exists to prevent — so any failure fails, whatever
+the others say.
 
-This deliberately rejects the weighted-total model used elsewhere
-(`spec × 0.4 + runtime × 0.4 + code × 0.2` against a threshold), for two
-reasons.
+## The judged dimensions
 
-**Compensation.** An average lets a weak dimension be redeemed by strong ones.
-A group scoring spec 90 / runtime 100 / visual 60 / code 85 totals 86 and would
-pass — while four visual assertions out of ten fail, so the rendering is wrong.
-That is precisely the false positive this project exists to prevent. A test
-pins it down:
+`spec` and `code` used to be scored by an evaluator subagent. They are not
+numbers; they were only ever numbers because something had to compare them to a
+floor. `/idd:verify` judges them as prose, once:
 
-```js
-test('a weak dimension is never redeemed by strong ones', ...)
-```
+- **Completeness** — every SHALL has an implementation you can point at.
+- **Correctness** — what was built matches what the requirement says, and every
+  scenario is covered.
+- **Coherence** — the change follows the design and the patterns already there.
 
-**Calibration.** Weights and a threshold look rigorous but rest on nothing. A
-total of 86 has no absolute meaning. Floors express checkable rules instead:
-`runtime: 100` says "no failing test passes the gate" — a binary property on
-which a weight would make no sense.
+The code itself goes through `superpowers:requesting-code-review`, which
+reviews independently. That is the one place in the workflow where an outside
+opinion is worth what it costs: an author is the worst judge of whether the work
+matches the intent.
 
-Only `spec`, `code` and `mutation` keep a graduated floor, because they rest on
-a judgement or a proportion rather than on a pass/fail execution.
-
-## The three verdicts
-
-| Verdict | When | What to do |
-| --- | --- | --- |
-| `PASS` | every enabled dimension is at or above its floor | next group |
-| `RETRY` | at least one is below | work the generated `FIX` tasks, re-dispatch |
-| `BLOCK` | a CRITICAL/HIGH review finding, or a dimension that could not be evaluated | fix the finding or the infrastructure |
-
-`BLOCK` wins over `RETRY` when both apply.
+There is no switch for these. A judgement you can turn off is not a gate.
 
 ## UNKNOWN is not zero
 
-A dimension that could not be evaluated reports `"UNKNOWN"`, never `0`, and
-`UNKNOWN` produces `BLOCK`.
+A dimension that could not be evaluated reports `UNKNOWN`, never `0`, and
+`UNKNOWN` produces `BLOCKED`.
 
-The distinction matters: `0` blames the implementation and sends the agent
-round the retry loop fixing code that was never the problem. `UNKNOWN` says the
-environment is broken and stops the machine.
+The distinction matters: `0` blames the implementation and sends someone fixing
+code that was never the problem. `UNKNOWN` says the environment is broken and
+stops the machine.
 
 A dev stack that will not start, a mutation tool that cannot run, a missing
-cucumber report — all `UNKNOWN`. A missing score for an enabled dimension is
-also `UNKNOWN`, not zero: silence is not evidence of failure, it is absence of
-evidence.
+cucumber report — all `UNKNOWN`. Silence is not evidence of failure; it is
+absence of evidence.
 
-The governing principle, throughout: **a PASS obtained by skipping a dimension
-is worse than a failure, because it lies.** `/idd:apply` refuses to start when
-an enabled dimension is unevaluable, rather than degrading quietly.
+The governing principle throughout: **a PASS obtained by skipping a dimension is
+worse than a failure, because it lies.** `/idd:apply` refuses to start when an
+enabled dimension is unevaluable, rather than degrading quietly at the end.
 
 ## Applicable is not the same as enabled
 
-A dimension can be enabled for the project and still have nothing to measure in
-a given group. `visual` is the case that matters: its assertions live in
-`VISUAL` tasks, so a group that has none makes no visual claim to check.
+A dimension can be enabled for the project and still have nothing to measure.
+`visual` is the case that matters: its assertions live in `VISUAL` tasks, so a
+change that declares none makes no visual claim to check.
 
-Neither obvious answer works. Scoring it 100 is a free pass — a group escapes
-the visual gate by simply not declaring a `VISUAL` task. Reporting `UNKNOWN`
-blocks every group that touches no interface, which is most of them.
+Neither obvious answer works. Scoring it 100 is a free pass — escape the gate by
+simply not declaring a task. Reporting `UNKNOWN` blocks every change that
+touches no interface, which is most of them.
 
-So applicability is a third state, and it is **derived from the tasks
-artifact**: `verdict-cli.mjs` reads `tasks.md`, finds the group, and drops
-`visual` when the group contains no `VISUAL` task. Its output carries the
-`applicable` list, which the verification report records.
-
-The derivation matters more than the rule. A sentinel the evaluator could emit
-— `"N/A"` — would only move the free pass: saying it would be enough to escape
-the gate. Reading the artifact is not something a model can talk its way
-around.
-
-### The other half: should it have had one?
-
-Applicability says a group without a `VISUAL` task has no visual claim to
-check. It cannot say whether it *should* have had one — which would leave the
-gate as strong as the diligence of whoever writes `tasks.md`.
-
-So `verdict-cli` also takes the group's changed files and reports a warning
-when the group touched a template or stylesheet and declared no visual
-assertion:
+So the absence is reported rather than scored, and it is paired with a check on
+the other half of the question: **should it have declared one?**
+`visualCoverageWarning` reads the change's own diff and says so when it rendered
+something and claimed nothing:
 
 ```
-group 3 changed styles/main.css but declares no VISUAL task
-  — the visual gate did not run on this group
+changed styles/main.css but declares no VISUAL task — the visual gate did not run
 ```
 
-It **warns rather than fails**, deliberately. A stylesheet touched for a lint
-fix has no visual consequence, and a gate that cannot tell the difference gets
-routed around by whoever it inconveniences. Detection is deterministic; the
-judgement stays human. The evaluator reports the warning as a finding even when
-the verdict is `PASS`.
+It **warns rather than fails**, deliberately. A stylesheet touched for a lint fix
+has no visual consequence, and a gate that cannot tell the difference gets routed
+around by whoever it inconveniences. Detection is deterministic; the judgement
+stays human — and the warning is recorded in the report even when the outcome is
+`PASS`.
 
-The extensions are the usual template and style ones — `.html`, `.css`,
-`.scss`, `.vue`, `.jsx`, `.tsx`, `.svelte`, `.twig`, `.erb`, `.blade.php` —
-and are overridable.
-
-## What is still only a prompt instruction
-
-The verdict, applicability and the coverage warning are all computed by code.
-Two things are not, and it is worth knowing which:
-
-**The iteration cap.** `max_iterations` is read from the config but no code
-enforces it — the RETRY loop lives in `/idd:apply`'s prompt, and the cap is an
-instruction to the agent running it. Making it deterministic would need an
-orchestrator holding state across turns, which this plugin is not. Until then,
-a runaway loop is caught by the human watching it.
-
-**Whether the evaluator actually followed its sequence.** Its prompt tells it
-to review before scoring, to re-run visual assertions rather than trust them,
-and to call `verdict-cli`. Structural tests assert those instructions are
-present in the file; nothing verifies an agent obeyed them on a given run. The
-trial observed correct behaviour across three dispatches — that is evidence,
-not a guarantee.
-
-## A fix round re-runs less than a first round
-
-After a fix, most of a group is provably untouched. Re-evaluating all of it is
-what makes a gate too slow to keep using — and the second-order cost of that is
-that it stops being run.
-
-`verdict-cli` returns a `recheck` list when it is told which files the fix
-touched:
-
-| | Re-runs |
-| --- | --- |
-| `spec`, `code` | always — judged against the fix diff, not the whole group |
-| `runtime` | always |
-| `visual` | only if the fix touched a template or stylesheet |
-| `mutation` | only if the fix touched mutable source or a test |
-| `acceptance` | only if the fix touched anything |
-
-The dimensions that are skipped are carried forward at their previous scores,
-and the report says they were carried rather than re-measured.
-
-**What makes the skips safe rather than optimistic** is that `runtime` always
-re-runs. It costs seconds and it catches collateral damage anywhere — so a fix
-that broke something far away still fails, whatever else was skipped.
-
-And, as everywhere else here, the decision is derived from the files rather
-than reported by the evaluator: an evaluator asked to judge what it may skip
-has an obvious incentive.
+The derivation matters more than the rule. A sentinel someone could *declare* —
+`"N/A"` — would only move the free pass: saying it would be enough to escape.
+Reading the diff is not something a model can talk its way around.
 
 ## Work no requirement governs
 
-If the diff delivers behaviour no `SHALL` covers, the evaluator returns `BLOCK`
-and says so — and it does **not** generate a fix task that writes the missing
-requirement.
+If the change delivers behaviour no `SHALL` covers, `/idd:verify` fails and says
+so — and it does **not** write the missing requirement.
 
 Whether the spec was incomplete or the work was out of scope has opposite
 remedies: one grows the spec, the other drops the code. Only a human can say
-which. Letting the evaluator write the requirement resolves it by making the
-code correct by construction — the spec and the code then come out of the same
-round with nobody in between.
+which. Writing the requirement resolves it by making the code correct by
+construction — the spec and the code then come out of the same round with nobody
+in between.
 
 A real run produced exactly this, and wrote a *good* requirement, which is what
-makes it worth guarding against: a well-written retrofit is harder to notice
-than a lazy one.
+makes it worth guarding against: a well-written retrofit is harder to notice than
+a lazy one. The same finding reproduced identically on a later run, which is how
+we know it is a property of the change rather than noise.
 
-## The verdict is computed outside the model
+## The verdict over measurements is computed outside the model
 
-The evaluator produces scores. It does **not** decide the verdict — it calls:
-
-```bash
-node "${CLAUDE_PLUGIN_ROOT}/scripts/verdict-cli.mjs" \
-  openspec/config.yaml '<scores as JSON>' openspec/changes/<id>/tasks.md <group>
-```
+`verify-cli.mjs` returns the verdict with the dimensions. The agent reports it;
+it does not decide it.
 
 A model that arbitrates its own grade is a model that can negotiate with it.
-Moving the decision out of the prompt makes it deterministic, and it is the one
-part of the gate covered by real unit tests.
+`scriptVerdict` is twelve lines and unit-tested: any `FAIL` fails, any `UNKNOWN`
+blocks, and a real failure outranks a broken probe because it is the actionable
+one.
+
+What this does **not** give you is an agent structurally incapable of
+misreporting. `/idd:verify` runs in the context that wrote the code. What stands
+in for that independence: every number comes from a command whose output is
+verbatim in the transcript, and the subjective half is delegated to a code
+reviewer that is a separate agent. That is most of the guarantee the old
+evaluator gave, for a fraction of what it cost — not all of it.
 
 ## Reading each dimension
 
-### spec
-
-The proportion of the contract's SHALL statements the diff satisfies. Below its
-floor means the code does not do what the specs asked — the fix is code, or the
-spec was wrong.
-
-### code
-
-Derived from the review — the full `requesting-code-review` skill on a
-substantial diff, the evaluator's own reading on a small one. CRITICAL and HIGH
-findings never reach this score: they return `BLOCK` before any scoring
-happens, and that includes a `REFACTOR` task that touched a test assertion. So `code` only ever
-reflects the MEDIUM/LOW residue, which is why its floor is the most permissive
-at 60.
-
 ### runtime
 
-100 if every test passes, 0 if the command cannot run, otherwise the proportion
-passing. Floor 100: no failing test passes the gate, ever.
+Each command in `project.test_commands`, run from the project root. Any non-zero
+exit fails the dimension and the failing command is named. No failing test passes
+the gate, ever.
 
 ### visual
 
-Assertions declared in the group's `VISUAL` tasks, **re-run by the evaluator
-itself** — it never reads the result the implementation session claimed.
+Every `VISUAL` task in the change, re-run by `/idd:verify` itself — it never
+reads the result the implementation session claimed. All of them go through **one**
+browser session: measured, four sequential probes cost 2990 ms against 2224 ms
+batched, and each separate invocation also cost a tool round trip worth far more
+than either.
 
 ```
 url: /
@@ -236,8 +159,9 @@ no assertion is rejected outright, because it would pass silently.
 
 Prose is not an assertion. Write `count .grid > *  12`, never "→ 12 columns".
 
-Screenshots are produced and attached to the report as evidence. They are never
-the criterion: a screenshot cannot fail.
+The URL they are measured against is `project.dev_stack_url`, declared rather
+than derived: inferring it from the dev stack command works for a
+`python3 -m http.server 8123` and for no real stack.
 
 ### mutation
 
@@ -252,16 +176,17 @@ score = (Killed + Timeout) / (Killed + Timeout + Survived + NoCoverage) × 100
 case, and the one a coverage-blind score would hide. `CompileError` and
 `Ignored` are excluded: not the suite's fault.
 
-Floor 70 rather than 100 because **equivalent mutants** — semantically
-identical to the original, therefore unkillable — are permanent false positives
-that no tool detects. Demanding 100 makes the gate impassable and pushes toward
-absurd tests.
+The threshold is 70 rather than 100 because **equivalent mutants** —
+semantically identical to the original, therefore unkillable — are permanent
+false positives that no tool detects. Demanding 100 makes the gate impassable
+and pushes toward absurd tests.
 
 A surviving mutant is not a bug in the code: it is a test that would not have
-caught the bug. Fix tasks must add or strengthen tests, never change behaviour.
+caught the bug. The remedy is to add or strengthen tests, never to change
+behaviour.
 
-Scoped to the group's changed files via `--since`; a full run is prohibitive in
-a per-group gate.
+Scoped to the change's own files via its derived base; a full run is
+prohibitive.
 
 ### acceptance
 
@@ -273,6 +198,5 @@ behaviour.
 The `.feature` files are regenerated from the specs on every run, so a stale
 extraction can never be what is scored.
 
-A failing scenario is a gap between the spec and the code. The findings must
-say which of the two is wrong: fixing the code and fixing the spec are very
-different tasks.
+A failing scenario is a gap between the spec and the code. Say which of the two
+is wrong: fixing the code and fixing the spec are very different tasks.
