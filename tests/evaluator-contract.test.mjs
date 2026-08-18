@@ -108,3 +108,29 @@ test('verdict-cli keeps the dimension when the group does exercise it', () => {
   assert.equal(verdict.status, 'BLOCK', 'an unscored but applicable visual must block')
   assert.deepEqual(verdict.unevaluated, ['visual'])
 })
+
+test('verdict-cli warns when a group changed view files without a VISUAL task', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'idd-verdict-'))
+  const configPath = join(dir, 'config.yaml')
+  const tasksPath = join(dir, 'tasks.md')
+  writeFileSync(configPath, 'verification:\n  visual: true\n', 'utf8')
+  writeFileSync(tasksPath, '## 3. Styling\n- [ ] 3.1 GREEN restyle\n', 'utf8')
+
+  const out = execFileSync(
+    'node',
+    [
+      cli,
+      configPath,
+      JSON.stringify({ spec: 90, runtime: 100, code: 80 }),
+      tasksPath,
+      '3',
+      JSON.stringify(['src/app.js', 'styles/main.css']),
+    ],
+    { encoding: 'utf8' },
+  )
+  const verdict = JSON.parse(out)
+  assert.equal(verdict.status, 'PASS', 'the warning must not change the verdict')
+  assert.equal(verdict.warnings.length, 1)
+  assert.match(verdict.warnings[0], /main\.css/)
+  assert.match(verdict.warnings[0], /no VISUAL task/)
+})

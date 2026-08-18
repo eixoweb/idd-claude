@@ -1,6 +1,11 @@
 import { test } from 'vitest'
 import assert from 'node:assert/strict'
-import { UNKNOWN, applicableDimensions, computeVerdict } from '../scripts/lib/verdict.mjs'
+import {
+  UNKNOWN,
+  applicableDimensions,
+  computeVerdict,
+  visualCoverageWarning,
+} from '../scripts/lib/verdict.mjs'
 
 const floors = { spec: 80, runtime: 100, code: 60, visual: 100, mutation: 70, acceptance: 100 }
 const enabled = ['spec', 'runtime', 'code', 'visual']
@@ -115,4 +120,55 @@ test('a group whose VISUAL task was removed loses the dimension, not a free pass
   })
   assert.equal(v.status, 'PASS')
   assert.deepEqual(v.unevaluated, [], 'an inapplicable dimension must not read as unevaluated')
+})
+
+// ---- Did the group touch the interface without declaring a visual claim? ----
+
+test('a group touching view files without a VISUAL task is flagged', () => {
+  const warning = visualCoverageWarning({
+    changedFiles: ['src/countdown.js', 'index.html'],
+    group: group('RED', 'GREEN'),
+  })
+  assert.ok(warning, 'a view-file change with no VISUAL task must be reported')
+  assert.match(warning, /index\.html/)
+})
+
+test('no warning when the group does declare a VISUAL task', () => {
+  assert.equal(
+    visualCoverageWarning({ changedFiles: ['index.html'], group: group('VISUAL') }),
+    null,
+  )
+})
+
+test('no warning when the group touches no view file', () => {
+  assert.equal(
+    visualCoverageWarning({ changedFiles: ['src/a.js', 'README.md'], group: group('RED') }),
+    null,
+  )
+})
+
+test('the view patterns cover the usual template and style extensions', () => {
+  for (const file of ['a.css', 'a.scss', 'a.vue', 'a.tsx', 'a.svelte', 'page.blade.php', 'a.twig']) {
+    assert.ok(
+      visualCoverageWarning({ changedFiles: [file], group: group('GREEN') }),
+      `${file} should count as a view file`,
+    )
+  }
+})
+
+test('the patterns are overridable per project', () => {
+  assert.equal(
+    visualCoverageWarning({ changedFiles: ['a.css'], group: group('GREEN'), patterns: ['.styl'] }),
+    null,
+  )
+  assert.ok(
+    visualCoverageWarning({ changedFiles: ['a.styl'], group: group('GREEN'), patterns: ['.styl'] }),
+  )
+})
+
+test('it warns rather than fails — the verdict is unaffected', () => {
+  // A stylesheet touched for a lint fix has no visual consequence. Detection
+  // should surface the omission, not tyrannise over it.
+  const v = computeVerdict({ scores: { spec: 90, code: 90 }, floors, enabled: ['spec', 'code'] })
+  assert.equal(v.status, 'PASS')
 })

@@ -2,11 +2,13 @@
 import { readFileSync } from 'node:fs'
 import { readVerification } from './lib/config.mjs'
 import { parseTasks } from './lib/tasks.mjs'
-import { applicableDimensions, computeVerdict } from './lib/verdict.mjs'
+import { applicableDimensions, computeVerdict, visualCoverageWarning } from './lib/verdict.mjs'
 
-const [configPath, scoresJson, tasksPath, groupNumber] = process.argv.slice(2)
+const [configPath, scoresJson, tasksPath, groupNumber, changedFilesJson] = process.argv.slice(2)
 if (!configPath || !scoresJson) {
-  console.error('usage: verdict-cli.mjs <configPath> <scoresJson> [tasksPath] [groupNumber]')
+  console.error(
+    'usage: verdict-cli.mjs <configPath> <scoresJson> [tasksPath] [groupNumber] [changedFilesJson]',
+  )
   process.exit(2)
 }
 
@@ -28,4 +30,10 @@ if (tasksPath && groupNumber) {
 const applicable = applicableDimensions(enabled, group)
 const verdict = computeVerdict({ scores, floors, enabled: applicable })
 
-console.log(JSON.stringify({ ...verdict, applicable }))
+const warnings = []
+if (group && enabled.includes('visual') && changedFilesJson) {
+  const warning = visualCoverageWarning({ changedFiles: JSON.parse(changedFilesJson), group })
+  if (warning) warnings.push(warning)
+}
+
+console.log(JSON.stringify({ ...verdict, applicable, warnings }))
