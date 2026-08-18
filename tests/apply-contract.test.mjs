@@ -57,8 +57,18 @@ test('apply documents the degraded fallback and its loss', () => {
   assert.match(apply, /does not transitively activate/i)
 })
 
-test('apply refuses to start rather than silently skipping a dimension', () => {
-  assert.match(apply, /refuse to start/i)
+test('apply delegates its preflight to a script, not to prose', () => {
+  // Five conditional branches an agent reads and interprets — each free to
+  // check a prerequisite the expensive way — became one command with one
+  // answer. The prompt is read on every run; a script is not reasoned over.
+  assert.match(apply, /preflight-cli\.mjs/)
+  assert.match(applyFlat, /report its `refusals` verbatim and \*\*stop\*\*/)
+  assert.match(applyFlat, /stops the run rather than quietly disappearing/)
+})
+
+test('apply derives the run shape from the preflight, not from config keys', () => {
+  assert.match(applyFlat, /returns `tier`, `subagents` and `worktree`/)
+  assert.doesNotMatch(apply, /verification\.worktree|verification\.subagents/)
 })
 
 test('both schemas replaced the upstream apply instruction', () => {

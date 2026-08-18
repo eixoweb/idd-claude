@@ -56,6 +56,7 @@ in `scripts/`.**
 | `visual.mjs` | `visual-cli.mjs` | dev-browser |
 | `mutation.mjs` | `mutation-cli.mjs` | stryker |
 | `acceptance.mjs` | `acceptance-cli.mjs` | extractor, cucumber-js |
+| `preflight.mjs` | `preflight-cli.mjs` | `which` |
 | `promote-schema.mjs`, `openspec-version.mjs`, `frontmatter.mjs` | `promote.mjs` | openspec |
 
 The split is why the interesting parts are testable without fixtures or
@@ -64,6 +65,19 @@ all pure functions over strings and objects.
 
 `stryker.config.json` mutates `scripts/lib/**` only — the shells are
 deliberately untested, and mutating them would report them as uncovered.
+
+## Prose the agent must interpret is a cost on every run
+
+`/idd:apply` is read and reasoned over before it acts, so anything expressible
+as a script belongs in one. Its preflight was five conditional branches in
+prose — and because the prose did not say *how* to check that dev-browser was
+available, an agent was free to check it by running it, which starts a daemon.
+121 ms of `preflight-cli.mjs` replaced it, and the answer is now identical every
+time.
+
+The same reasoning already applies to the verdict, to dimension applicability,
+to the mutation scope and to the recheck list. The rule generalises: **if the
+answer is derivable, derive it — the prompt is for judgement, not evaluation.**
 
 ## Prompts are tested structurally
 
