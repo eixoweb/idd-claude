@@ -160,8 +160,10 @@ spec was wrong.
 
 ### code
 
-Derived from `requesting-code-review`. CRITICAL and HIGH findings never reach
-this score: they return `BLOCK` before any scoring happens. So `code` only ever
+Derived from the review — the full `requesting-code-review` skill on a
+substantial diff, the evaluator's own reading on a small one. CRITICAL and HIGH
+findings never reach this score: they return `BLOCK` before any scoring
+happens, and that includes a `REFACTOR` task that touched a test assertion. So `code` only ever
 reflects the MEDIUM/LOW residue, which is why its floor is the most permissive
 at 60.
 
