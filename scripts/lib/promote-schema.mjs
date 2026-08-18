@@ -21,6 +21,7 @@ const VERIFICATION_BLOCK = `verification:
   visual: true                 # dev-browser gate
   mutation: false              # mutation testing - off by default
   subagents: true              # one subagent per task
+  worktree: false              # isolate in a git worktree - only worth it for parallel work
   floors:                      # a dimension below its floor -> RETRY
     spec: 80
     runtime: 100
