@@ -28,9 +28,19 @@ run; it does not quietly disappear from the verdict.
 
 ## Session setup
 
-1. Create an isolated workspace with `superpowers:using-git-worktrees`, unless
-   the project's dev stack cannot serve a worktree — with a single-docroot
-   stack such as DDEV it cannot, so work in place and say why.
+1. **Workspace.** Read `verification.worktree`.
+
+   - `false` (the default) — work in place, on the current branch. A worktree
+     isolates from concurrent work; one person doing one change at a time has
+     none to isolate from, and a branch already protects the main line.
+   - `true` — create one with `superpowers:using-git-worktrees`. Worth it when
+     task groups run in parallel, when you need the main checkout free while a
+     change is in flight, or when you want the workspace to be disposable.
+
+   Whichever it is, say so at the start of the run. And if it is `true` while
+   the dev stack serves a single docroot — DDEV, for one — stop: the visual
+   gate would probe the main checkout while you edit the worktree, and score
+   the wrong files. Turn it off for that project.
 2. Invoke `superpowers:test-driven-development`. This is mandatory and holds
    "no GREEN without a preceding RED" for the whole session.
 3. Read `tasks.md` and group the work:

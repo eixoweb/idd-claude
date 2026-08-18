@@ -82,3 +82,14 @@ test('operational settings come through with defaults', () => {
   assert.equal(settings.evaluatorModel, 'sonnet')
   assert.equal(settings.subagents, true)
 })
+
+test('worktree is off by default', () => {
+  // A worktree buys isolation from concurrent work. Solo and serial, it
+  // isolates from nothing while still costing a duplicated install and a dev
+  // server pointed at the wrong directory.
+  assert.equal(readVerification('verification: {}').worktree, false)
+})
+
+test('worktree can be turned on', () => {
+  assert.equal(readVerification('verification:\n  worktree: true\n').worktree, true)
+})

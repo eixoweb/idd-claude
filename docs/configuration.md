@@ -75,6 +75,21 @@ drafting but not enough to make an evaluator branch. One boolean, no drift.
 appropriate for bounded changes, where the per-task isolation is not worth the
 token cost.
 
+### `worktree`
+
+`false` by default. A worktree isolates the change from concurrent work — and
+if nothing runs concurrently, it isolates from nothing while still costing a
+duplicated install, an editor pointed at the wrong directory, and a dev server
+serving the wrong tree.
+
+Turn it on when task groups genuinely run in parallel, when you need the main
+checkout free while a change is in flight, or when you want a workspace you can
+delete without thinking.
+
+**Never turn it on for a single-docroot stack** such as DDEV: the visual gate
+probes what the server serves, so it would measure the main checkout while the
+edits live in the worktree — a green gate on the wrong files.
+
 ### `floors`
 
 A map of dimension → minimum score, 0 to 100. Any dimension below its floor

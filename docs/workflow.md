@@ -116,7 +116,7 @@ implementation conversation. A ticked checkbox is a claim, not evidence.
 
 | Skill | Role |
 | --- | --- |
-| `using-git-worktrees` | isolated workspace |
+| `using-git-worktrees` | isolated workspace — only when `worktree: true` |
 | `subagent-driven-development` | one subagent per task |
 | `dispatching-parallel-agents` | genuinely independent groups in parallel |
 | `verification-before-completion` | final pass |
@@ -166,10 +166,11 @@ makes adoption on an existing codebase bearable.
 
 ## Known constraints
 
-**Worktrees and single-docroot stacks.** The visual gate needs the dev server
-to serve the *worktree*, not the main checkout. Free with a dev server started
-from an arbitrary directory; impossible with DDEV, which serves one docroot —
-work in place there and say why.
+**Worktrees are off by default.** They isolate a change from concurrent work,
+and most changes have none to isolate from. Turn `verification.worktree` on for
+parallel groups or a disposable workspace — but never for a single-docroot
+stack such as DDEV, where the visual gate would probe the main checkout while
+the edits live in the worktree.
 
 **Projects with no test suite.** Set `runtime: false` to record the decision.
 Leaving it on with no test commands makes every group BLOCK, and `/idd:apply`

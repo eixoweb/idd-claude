@@ -43,5 +43,8 @@ export function readVerification(configSource) {
     maxIterations: v.max_iterations ?? 5,
     evaluatorModel: v.evaluator_model ?? 'sonnet',
     subagents: v.subagents ?? true,
+    // Off by default: isolation is worth its cost when work runs in parallel,
+    // and most changes are one person doing one thing.
+    worktree: v.worktree ?? false,
   }
 }

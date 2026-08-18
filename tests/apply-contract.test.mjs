@@ -10,6 +10,14 @@ test('apply mandates the TDD skill at session start', () => {
   assert.match(apply, /superpowers:test-driven-development/)
 })
 
+test('apply makes the worktree a choice, not the default path', () => {
+  assert.match(apply, /verification\.worktree/)
+  assert.match(apply, /work in place/i)
+  // The trap that makes an enabled worktree wrong: the visual gate would
+  // probe the main checkout while the edits are in the worktree.
+  assert.match(apply, /single docroot|DDEV/)
+})
+
 test('apply wires the multi-agent layer', () => {
   assert.match(apply, /superpowers:using-git-worktrees/)
   assert.match(apply, /superpowers:subagent-driven-development/)
