@@ -10,6 +10,10 @@
 Only `propose → apply → verify → archive` produces files. `explore` writes
 nothing: its output is a decision.
 
+`/idd:apply` runs `/idd:verify` itself when it is done — a gate you have to
+remember is a gate that gets skipped. `--no-verify` stops after the
+implementation, and leaves the change unverified rather than verified-by-omission.
+
 `/idd:propose <id> --auto` drops the confirmations: no checkpoint between
 artifacts, no "shall we proceed" once `grilling` has emptied its frontier, and
 the change folder is committed for you. It still runs the tier guard and still

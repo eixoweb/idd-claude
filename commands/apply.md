@@ -3,7 +3,9 @@ name: apply
 description: "Implement a change under enforced TDD, then hand off to /idd:verify"
 ---
 
-Implement the change named in the argument.
+Implement the change named in the argument, then verify it.
+
+Pass `--no-verify` to stop after the implementation.
 
 Apply implements. It does not judge its own work: the gate is `/idd:verify`,
 once, at the end. A workflow that reviews itself between every task group ends
@@ -95,6 +97,24 @@ it cannot see is what `/idd:verify` is for.
 
 ## End of the change
 
-Every checkbox ticked, the guard clean, the working tree committed. Then hand
-off to `/idd:verify` — and let it do the verifying. Do not pre-run its
-dimensions here to see whether it will pass.
+Every checkbox ticked, the guard clean, the working tree committed. Those are
+`/idd:verify`'s own preconditions, so meeting them is what makes the handoff
+possible rather than a courtesy.
+
+**Then run `/idd:verify <change id>` yourself** — do not suggest it and stop. A
+gate that has to be remembered is a gate that gets skipped, and this workflow has
+exactly one. In the default configuration it costs seconds: the test commands and
+a single browser session. It is the only thing between a change that runs and a
+change that does what its specs asked.
+
+Report its outcome verbatim. Do not pre-run its dimensions here to see whether it
+will pass, and do not soften a FAIL on the way back.
+
+**Do not chain** when a precondition is unmet — an unticked checkbox, a dirty
+tree, a guard still blocking. Say which one, and stop. Verify would fail on it a
+step later anyway, with the cause a step further from view.
+
+`--no-verify` stops after the implementation, for when you want to read the work
+before the gate sees it. It skips the run, not the requirement: the change is
+unverified until `/idd:verify` says otherwise, and nothing downstream —
+`/idd:archive` included — may treat it as done.

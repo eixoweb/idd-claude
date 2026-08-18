@@ -65,6 +65,24 @@ test('apply does not pre-run the gate it is about to hand off to', () => {
   assert.match(applyFlat, /Do not pre-run its dimensions here/)
 })
 
+test('apply runs the gate itself rather than recommending it', () => {
+  // A gate that has to be remembered is a gate that gets skipped — the defect
+  // this workflow keeps finding in its own wiring.
+  assert.match(applyFlat, /run `\/idd:verify/i)
+  assert.match(applyFlat, /gate that has to be remembered/i)
+})
+
+test('--no-verify skips the run without pretending it skips the requirement', () => {
+  const apply = readFileSync(new URL('commands/apply.md', root), 'utf8')
+  assert.match(apply, /--no-verify/)
+  assert.match(applyFlat, /skips the run, not the requirement/i)
+})
+
+test('apply refuses to chain when its own preconditions are unmet', () => {
+  assert.match(applyFlat, /Do not chain/i)
+  assert.match(applyFlat, /unticked checkbox|dirty tree/i)
+})
+
 test('both schemas replaced the upstream apply instruction', () => {
   for (const dir of ['schema', 'schema-lite']) {
     const schema = parse(readFileSync(new URL(`${dir}/schema.yaml`, root), 'utf8'))
