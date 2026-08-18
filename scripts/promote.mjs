@@ -29,7 +29,7 @@ if (!openspec.satisfies) {
 }
 
 const drifted = hasDrifted(projectRoot, pluginVersion)
-const { schemaPaths, configPath, configCreated } = promoteSchema({
+const { schemaPaths, configPath, configCreated, configMerged, previousSchema } = promoteSchema({
   pluginRoot,
   projectRoot,
   pluginVersion,
@@ -38,9 +38,14 @@ const { schemaPaths, configPath, configCreated } = promoteSchema({
 for (const [name, path] of Object.entries(schemaPaths)) {
   console.log(`Schema ${name} promoted to ${path} (plugin ${pluginVersion})`)
 }
-console.log(
-  configCreated ? `Config written to ${configPath}` : `Config left untouched at ${configPath}`,
-)
+if (configCreated) {
+  console.log(`Config written to ${configPath}`)
+} else if (configMerged) {
+  console.log(`Config merged at ${configPath}`)
+  if (previousSchema) console.log(`  default schema was "${previousSchema}", now "idd-claude"`)
+} else {
+  console.log(`Config already set up at ${configPath}`)
+}
 if (drifted) {
   console.log(
     'The previously promoted schema was from a different plugin version — it has been refreshed.',

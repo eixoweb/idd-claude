@@ -1,8 +1,13 @@
 # Configuration reference
 
-Everything lives in `openspec/config.yaml`, written by `/idd:init` and never
-overwritten afterwards — re-running `/idd:init` refreshes the schemas but
-leaves an existing config untouched.
+Everything lives in `openspec/config.yaml`.
+
+`openspec init` writes that file first — a comment-only one with
+`schema: spec-driven` and no verification block — so `/idd:init` **merges**
+rather than writing or skipping. It points `schema` at `idd-claude`, appends
+the `verification` and `project` blocks when they are missing, preserves the
+explanatory comments, and never disturbs a block you have configured. Running
+it twice changes nothing the second time.
 
 ## Full default
 
@@ -145,7 +150,9 @@ verification:
 
 ## What `/idd:init` does not do
 
-It never edits an existing `config.yaml`, and it never touches
+It never disturbs settings you have made — an existing `verification` block is
+left exactly as it is, and only a `schema` line still pointing elsewhere is
+rewritten. And it never touches
 `openspec/schemas/idd-claude*/` in a way you should rely on — those are copies,
 overwritten on the next promotion. Change the source in the plugin repo
 instead.
