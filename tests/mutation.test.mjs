@@ -1,6 +1,6 @@
 import { test } from 'vitest'
 import assert from 'node:assert/strict'
-import { readMutationScore } from '../scripts/lib/mutation.mjs'
+import { chooseMutationScope, readMutationScore } from '../scripts/lib/mutation.mjs'
 
 const report = (statuses) => ({
   files: {
@@ -46,4 +46,65 @@ test('mutants are counted across every file', () => {
     },
   }
   assert.equal(readMutationScore(multi), 50)
+})
+
+// ---- Choosing what to mutate for a given diff ----
+
+const GLOBS = ['scripts/lib/**/*.mjs']
+
+test('a diff touching source files mutates exactly those', () => {
+  const scope = chooseMutationScope(['scripts/lib/visual.mjs', 'README.md'], GLOBS)
+  assert.equal(scope.mode, 'scoped')
+  assert.deepEqual(scope.mutate, ['scripts/lib/visual.mjs'])
+})
+
+test('a test-only diff falls back to a full run', () => {
+  // Scoping to changed source files would leave nothing to mutate — exactly
+  // when the mutation score is the deliverable.
+  const scope = chooseMutationScope(['tests/visual-parse.test.mjs'], GLOBS)
+  assert.equal(scope.mode, 'full')
+})
+
+test('a diff touching neither source nor tests has nothing to measure', () => {
+  const scope = chooseMutationScope(['README.md', 'docs/workflow.md'], GLOBS)
+  assert.equal(scope.mode, 'none')
+})
+
+test('a test file is recognised by name or by directory', () => {
+  for (const file of ['tests/a.test.mjs', 'src/a.spec.js', 'tests/fixtures/b.mjs']) {
+    assert.equal(chooseMutationScope([file], GLOBS).mode, 'full', `${file} should read as a test`)
+  }
+})
+
+test('the double star crosses directories, the single star does not', () => {
+  assert.equal(chooseMutationScope(['scripts/lib/deep/a.mjs'], GLOBS).mode, 'scoped')
+  assert.equal(chooseMutationScope(['scripts/lib/a.mjs'], ['scripts/lib/*.mjs']).mode, 'scoped')
+  assert.equal(chooseMutationScope(['scripts/lib/deep/a.mjs'], ['scripts/lib/*.mjs']).mode, 'none')
+})
+
+test('a source file with its own test still runs full', () => {
+  // This assertion used to expect 'scoped', on the assumption that a changed
+  // test belongs to the changed source. It does not always, and acting on the
+  // assumption made the gate measure the wrong module. Paths cannot tell us
+  // what a test covers, so a changed test means a full run.
+  const scope = chooseMutationScope(['scripts/lib/verdict.mjs', 'tests/verdict.test.mjs'], GLOBS)
+  assert.equal(scope.mode, 'full')
+})
+
+test('a source change plus test-only work on another module runs full', () => {
+  // The case the paired test above does not cover: module A changed, and the
+  // tests of an untouched module B changed too. Scoping to A would silently
+  // skip B — the module the change may exist to measure. Measuring more
+  // slowly beats measuring the wrong thing cheaply.
+  const scope = chooseMutationScope(
+    ['scripts/lib/mutation.mjs', 'tests/visual-parse.test.mjs'],
+    GLOBS,
+  )
+  assert.equal(scope.mode, 'full')
+})
+
+test('a pure source diff still scopes', () => {
+  const scope = chooseMutationScope(['scripts/lib/verdict.mjs'], GLOBS)
+  assert.equal(scope.mode, 'scoped')
+  assert.deepEqual(scope.mutate, ['scripts/lib/verdict.mjs'])
 })

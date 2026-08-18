@@ -66,3 +66,76 @@ test('the probe script targets the declared url and viewport', () => {
   assert.match(script, /768/)
   assert.match(script, /getComputedStyle|querySelectorAll/)
 })
+
+// ---- Failure messages and probe construction (group 2) ----
+
+test('a style failure names the property, the expected and the measured value', () => {
+  const { failures } = evaluateVisual([style({ property: 'padding-block' })], ['12px'])
+  assert.equal(failures[0].property, 'padding-block')
+  assert.equal(failures[0].selector, '.hero')
+  assert.match(failures[0].message, /\.hero padding-block/)
+  assert.match(failures[0].message, /expected 68px/)
+  assert.match(failures[0].message, /got 12px/)
+})
+
+test('a count failure is labelled count, not by a property', () => {
+  const { failures } = evaluateVisual([{ kind: 'count', selector: '.item', expected: 3 }], [5])
+  assert.equal(failures[0].property, 'count')
+  assert.match(failures[0].message, /\.item count/)
+  assert.match(failures[0].message, /expected 3/)
+  assert.match(failures[0].message, /got 5/)
+})
+
+test('a missing element names the selector it looked for', () => {
+  const { failures } = evaluateVisual([style({ selector: '.absent' })], [null])
+  assert.match(failures[0].message, /\.absent/)
+  assert.match(failures[0].message, /no element matched/)
+})
+
+test('values with different units never compare as numbers', () => {
+  // 68px and 68% share a magnitude and mean nothing alike.
+  assert.equal(evaluateVisual([style({ expected: '68px' })], ['68%']).score, 0)
+  assert.equal(evaluateVisual([style({ expected: '68px', tolerance: 5 })], ['68%']).score, 0)
+})
+
+test('a unitless number still compares numerically', () => {
+  assert.equal(evaluateVisual([style({ expected: '700' })], ['700']).score, 100)
+  assert.equal(evaluateVisual([style({ expected: '700', tolerance: 0 })], ['400']).score, 0)
+})
+
+test('negative and fractional values are read as numbers', () => {
+  assert.equal(evaluateVisual([style({ expected: '-2px', tolerance: 0.5 })], ['-2.4px']).score, 100)
+  assert.equal(evaluateVisual([style({ expected: '-2px', tolerance: 0.1 })], ['-2.4px']).score, 0)
+})
+
+test('the tolerance is inclusive at its boundary', () => {
+  assert.equal(evaluateVisual([style({ tolerance: 1 })], ['69px']).score, 100)
+  assert.equal(evaluateVisual([style({ tolerance: 1 })], ['69.01px']).score, 0)
+})
+
+test('each assertion kind produces its own probe, in the declared order', () => {
+  const spec = parseVisualSpec([
+    'url: /',
+    'count  .first   2',
+    'assert .second  color  red',
+  ])
+  const script = buildProbeScript(spec, 'https://example.test')
+  const probes = JSON.parse(script.match(/const probes = (\[.*?\]);/s)[1])
+
+  assert.deepEqual(probes, [
+    { kind: 'count', selector: '.first' },
+    { kind: 'style', selector: '.second', property: 'color' },
+  ])
+})
+
+test('a count probe carries no property and a style probe does', () => {
+  const spec = parseVisualSpec(['url: /', 'count .a  1'])
+  const [probe] = JSON.parse(buildProbeScript(spec, 'https://x.test').match(/const probes = (\[.*?\]);/s)[1])
+  assert.equal(probe.property, undefined, 'a count has no property to read')
+})
+
+test('the probe resolves the url against the base rather than concatenating', () => {
+  const spec = parseVisualSpec(['url: /deep/page', 'count .a  1'])
+  const script = buildProbeScript(spec, 'https://example.test/ignored')
+  assert.match(script, /"https:\/\/example\.test\/deep\/page"/)
+})

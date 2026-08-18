@@ -2,17 +2,41 @@
 import { execFileSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { readMutationScore, UNKNOWN } from './lib/mutation.mjs'
+import { chooseMutationScope, readMutationScore, UNKNOWN } from './lib/mutation.mjs'
 
-const [since] = process.argv.slice(2)
+const [baseRef] = process.argv.slice(2)
+
+let mutateGlobs = ['**/*.mjs']
+try {
+  mutateGlobs = JSON.parse(readFileSync('stryker.config.json', 'utf8')).mutate ?? mutateGlobs
+} catch {
+  // No config: leave the default and let Stryker complain if it must.
+}
+
+// Stryker has no --since. Work out what to mutate from the diff ourselves.
+let scope = { mode: 'full', mutate: [] }
+if (baseRef) {
+  let changed = []
+  try {
+    changed = execFileSync('git', ['diff', '--name-only', `${baseRef}..HEAD`], { encoding: 'utf8' })
+      .split('\n')
+      .filter(Boolean)
+  } catch (error) {
+    console.log(JSON.stringify({ score: UNKNOWN, error: firstLine(error) }))
+    process.exit(0)
+  }
+  scope = chooseMutationScope(changed, mutateGlobs)
+}
+
+if (scope.mode === 'none') {
+  // Nothing this diff touched is mutable, and no test moved either.
+  console.log(JSON.stringify({ score: UNKNOWN, reason: 'no mutable file in the diff' }))
+  process.exit(0)
+}
+
 const args = ['run']
-// Scope to the diff: a full run re-executes the suite once per mutant and is
-// prohibitive inside a per-group gate.
-if (since) args.push('--since', since)
+if (scope.mode === 'scoped') args.push('--mutate', scope.mutate.join(','))
 
-// `npx stryker` does not resolve the binary reliably — it falls through to
-// `npm run stryker` and fails on a missing script. Call the local bin, which
-// is where a devDependency install puts it.
 const bin = join(process.cwd(), 'node_modules', '.bin', 'stryker')
 
 try {
@@ -24,7 +48,7 @@ try {
 
 try {
   const report = JSON.parse(readFileSync('reports/mutation/mutation.json', 'utf8'))
-  console.log(JSON.stringify({ score: readMutationScore(report) }))
+  console.log(JSON.stringify({ score: readMutationScore(report), scope: scope.mode }))
 } catch (error) {
   console.log(JSON.stringify({ score: UNKNOWN, error: firstLine(error) }))
 }
