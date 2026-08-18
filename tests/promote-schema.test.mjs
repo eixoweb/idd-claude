@@ -11,6 +11,7 @@ import {
   promoteSchema,
   promotedVersion,
   hasDrifted,
+  mergeConfig,
 } from '../scripts/lib/promote-schema.mjs'
 
 const pluginRoot = fileURLToPath(new URL('../', import.meta.url))
@@ -84,4 +85,56 @@ test('hasDrifted is true only when a promoted version differs', () => {
 test('defaultConfig is parseable YAML with spec_as_source off', () => {
   const config = parse(defaultConfig())
   assert.equal(config.verification.spec_as_source, false)
+})
+
+test('mergeConfig adds the verification block to a config that lacks one', () => {
+  // openspec init writes a comment-only config, so this is the normal case,
+  // not the edge case.
+  const { source, verificationAdded } = mergeConfig('schema: spec-driven\n\n# a comment\n')
+  assert.equal(verificationAdded, true)
+  const config = parse(source)
+  assert.equal(config.verification.runtime, true)
+  assert.equal(config.verification.floors.visual, 100)
+  assert.ok(config.project, 'the project block must come with it')
+})
+
+test('mergeConfig points the schema at idd-claude and says what it replaced', () => {
+  const { source, previousSchema } = mergeConfig('schema: spec-driven\n')
+  assert.equal(previousSchema, 'spec-driven')
+  assert.equal(parse(source).schema, 'idd-claude')
+})
+
+test('mergeConfig preserves comments', () => {
+  const { source } = mergeConfig('schema: spec-driven\n\n# keep me\n#   context: |\n')
+  assert.match(source, /# keep me/)
+  assert.match(source, /#   context: \|/)
+})
+
+test('mergeConfig never touches an existing verification block', () => {
+  const existing = 'schema: idd-claude\nverification:\n  visual: false\n  runtime: false\n'
+  const { source, verificationAdded } = mergeConfig(existing)
+  assert.equal(verificationAdded, false)
+  assert.equal(parse(source).verification.visual, false)
+  assert.equal(parse(source).verification.runtime, false)
+})
+
+test('mergeConfig is idempotent', () => {
+  const once = mergeConfig('schema: spec-driven\n').source
+  const twice = mergeConfig(once)
+  assert.equal(twice.source, once)
+  assert.equal(twice.verificationAdded, false)
+})
+
+test('promoteSchema merges into a config written by openspec init', () => {
+  const project = newProject()
+  mkdirSync(join(project, 'openspec'), { recursive: true })
+  const configPath = join(project, 'openspec', 'config.yaml')
+  writeFileSync(configPath, 'schema: spec-driven\n\n# Project context (optional)\n', 'utf8')
+
+  const result = promoteSchema({ pluginRoot, projectRoot: project, pluginVersion: '0.1.0' })
+
+  assert.equal(result.configMerged, true)
+  const config = parse(readFileSync(configPath, 'utf8'))
+  assert.equal(config.schema, 'idd-claude')
+  assert.equal(config.verification.runtime, true)
 })
