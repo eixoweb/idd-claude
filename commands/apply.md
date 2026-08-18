@@ -94,24 +94,27 @@ tell it the tier so it can calibrate its own depth: on a small diff it should
 judge the code directly rather than invoke the full `requesting-code-review`
 skill, which costs more than it finds on twenty lines.
 
-**Gather its inputs and pass them in the dispatch. Do not tell it to go and
-find them.** Its charter is that it receives only the contract, the specs and
-the diff and does not go looking — a charter the dispatch has to make true, not
-merely assert. Handing them over is also what keeps the dispatch short: an
-evaluator that has to locate its own inputs spends most of its turns doing it.
+**Gather its inputs with one command, and pass them in the dispatch.**
 
-Collect, before dispatching:
+```
+node "${CLAUDE_PLUGIN_ROOT}/scripts/evaluator-input-cli.mjs" <change id> <group|""> .
+```
 
-- the group's heading and its tasks, from `tasks.md` — or every group's, when
-  evaluating a bounded change once;
-- the assertion lines of each `VISUAL` task, as a JSON array per task, ready to
-  pass to `visual-cli.mjs`;
-- the change's spec files, in full;
-- `git diff <base>..HEAD`, and the list of changed files as a JSON array;
-- the base ref and the dev stack base URL.
+Pass the group number for an architectural change, an empty string for a
+bounded one — it evaluates every group at once. The command returns, in one
+call: the tier, the derived base ref, the groups with their tasks, each VISUAL
+task's assertion lines ready to pass to `visual-cli.mjs`, the spec content, the
+changed code files, and the diff.
 
-Pass all of it in the prompt. Give it the paths it must *run* — the CLIs — not
-the paths it must *read*.
+The diff it returns **excludes the change's own artifacts**. An evaluator has no
+business re-reading the proposal it measures against, and carrying it inflates
+the payload while diluting the review. The artifact files are listed separately
+if you need to mention them.
+
+Paste that payload into the dispatch. Its charter is that it receives only the
+contract, the specs and the diff and does not go looking — a charter the
+dispatch has to make true, not merely assert. Give it the paths it must *run* —
+the CLIs — not the paths it must *read*.
 
 Then act on the verdict:
 
