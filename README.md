@@ -38,7 +38,7 @@ adds a verification layer that a screenshot or a green suite cannot fake.
 
 ```
 /plugin marketplace add eixoweb/idd-claude
-/plugin install idd-claude@idd-claude
+/plugin install idd@idd-claude
 ```
 
 Then, from the root of a project you want to use it in:

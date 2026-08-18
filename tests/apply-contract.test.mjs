@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs'
 import { parse } from 'yaml'
 
 const root = new URL('../', import.meta.url)
-const apply = readFileSync(new URL('commands/idd/apply.md', root), 'utf8')
+const apply = readFileSync(new URL('commands/apply.md', root), 'utf8')
 
 test('apply mandates the TDD skill at session start', () => {
   assert.match(apply, /superpowers:test-driven-development/)

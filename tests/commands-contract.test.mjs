@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url'
 import { join } from 'node:path'
 import { parseFrontmatter } from '../scripts/lib/frontmatter.mjs'
 
-const commandsRoot = fileURLToPath(new URL('../commands/idd/', import.meta.url))
+const commandsRoot = fileURLToPath(new URL('../commands/', import.meta.url))
 const read = (name) => readFileSync(join(commandsRoot, name), 'utf8')
 
 // Prompts are wrapped for readability, so a phrase can straddle a newline.
@@ -76,4 +76,30 @@ test('no command references a command that does not exist', () => {
       )
     }
   }
+})
+
+test('commands sit directly in commands/, not in a subdirectory', () => {
+  // A subdirectory is not scanned: the commands simply do not exist on an
+  // installed plugin. Nothing else in the suite could see that, because every
+  // other test reads the files by path.
+  const entries = readdirSync(commandsRoot, { withFileTypes: true })
+  const nested = entries.filter((e) => e.isDirectory()).map((e) => e.name)
+  assert.deepEqual(nested, [], `commands must not be nested: ${nested.join(', ')}`)
+  assert.equal(entries.filter((e) => e.name.endsWith('.md')).length, 6)
+})
+
+test('the plugin name is the command namespace the docs promise', () => {
+  // Commands are namespaced by plugin name, so /idd:apply requires a plugin
+  // literally called "idd".
+  const plugin = JSON.parse(
+    readFileSync(fileURLToPath(new URL('../.claude-plugin/plugin.json', import.meta.url)), 'utf8'),
+  )
+  assert.equal(plugin.name, 'idd')
+  const market = JSON.parse(
+    readFileSync(
+      fileURLToPath(new URL('../.claude-plugin/marketplace.json', import.meta.url)),
+      'utf8',
+    ),
+  )
+  assert.ok(market.plugins.some((p) => p.name === 'idd'))
 })
