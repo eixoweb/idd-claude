@@ -72,6 +72,32 @@ The governing principle, throughout: **a PASS obtained by skipping a dimension
 is worse than a failure, because it lies.** `/idd:apply` refuses to start when
 an enabled dimension is unevaluable, rather than degrading quietly.
 
+## Applicable is not the same as enabled
+
+A dimension can be enabled for the project and still have nothing to measure in
+a given group. `visual` is the case that matters: its assertions live in
+`VISUAL` tasks, so a group that has none makes no visual claim to check.
+
+Neither obvious answer works. Scoring it 100 is a free pass — a group escapes
+the visual gate by simply not declaring a `VISUAL` task. Reporting `UNKNOWN`
+blocks every group that touches no interface, which is most of them.
+
+So applicability is a third state, and it is **derived from the tasks
+artifact**: `verdict-cli.mjs` reads `tasks.md`, finds the group, and drops
+`visual` when the group contains no `VISUAL` task. Its output carries the
+`applicable` list, which the verification report records.
+
+The derivation matters more than the rule. A sentinel the evaluator could emit
+— `"N/A"` — would only move the free pass: saying it would be enough to escape
+the gate. Reading the artifact is not something a model can talk its way
+around.
+
+**Known limitation.** Nothing yet forces a group that touches the interface to
+carry a `VISUAL` task. The gate is therefore only as strong as the diligence of
+whoever writes `tasks.md`. Deriving *expected* applicability from the changed
+file types — a diff touching templates or stylesheets ought to require a
+`VISUAL` task — would close it, and is not implemented.
+
 ## The verdict is computed outside the model
 
 The evaluator produces scores. It does **not** decide the verdict — it calls:

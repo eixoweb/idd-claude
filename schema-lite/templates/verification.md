@@ -9,6 +9,8 @@
 | ------- | ---- | ------- | ------ | ---- | -------- | ---------- | ------- |
 | 1       | —    | —       | —      | —    | —        | —          | —       |
 
+**Dimensions applicable to this group**: `<the `applicable` list from verdict-cli>`
+
 **Dimensions disabled for this project**: `<list, or "none">`
 
 **Floors in force**: `<copied from openspec/config.yaml>`

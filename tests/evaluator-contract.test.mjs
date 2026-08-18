@@ -37,7 +37,11 @@ test('verdict-cli returns PASS for scores above the floors', () => {
     [cli, configPath, JSON.stringify({ spec: 90, runtime: 100, code: 80, visual: 100 })],
     { encoding: 'utf8' },
   )
-  assert.deepEqual(JSON.parse(out), { status: 'PASS', failed: [], unevaluated: [] })
+  const verdict = JSON.parse(out)
+  assert.equal(verdict.status, 'PASS')
+  assert.deepEqual(verdict.failed, [])
+  assert.deepEqual(verdict.unevaluated, [])
+  assert.deepEqual(verdict.applicable.sort(), ['code', 'runtime', 'spec', 'visual'])
 })
 
 test('verdict-cli BLOCKS when an enabled dimension was not scored', () => {
@@ -69,4 +73,38 @@ test('the evaluator runs the acceptance suite through the CLI', () => {
   const body = readFileSync(agentPath, 'utf8')
   assert.match(body, /acceptance-cli\.mjs/)
   assert.match(body, /spec_as_source/)
+})
+
+test('verdict-cli drops a dimension the group cannot exercise', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'idd-verdict-'))
+  const configPath = join(dir, 'config.yaml')
+  const tasksPath = join(dir, 'tasks.md')
+  writeFileSync(configPath, 'verification:\n  visual: true\n', 'utf8')
+  writeFileSync(tasksPath, '## 2. No UI here\n- [ ] 2.1 RED x\n- [ ] 2.2 GREEN y\n', 'utf8')
+
+  const out = execFileSync(
+    'node',
+    [cli, configPath, JSON.stringify({ spec: 90, runtime: 100, code: 80 }), tasksPath, '2'],
+    { encoding: 'utf8' },
+  )
+  const verdict = JSON.parse(out)
+  assert.equal(verdict.status, 'PASS', 'a group with no VISUAL task must not BLOCK on visual')
+  assert.ok(!verdict.applicable.includes('visual'))
+})
+
+test('verdict-cli keeps the dimension when the group does exercise it', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'idd-verdict-'))
+  const configPath = join(dir, 'config.yaml')
+  const tasksPath = join(dir, 'tasks.md')
+  writeFileSync(configPath, 'verification:\n  visual: true\n', 'utf8')
+  writeFileSync(tasksPath, '## 2. UI\n- [ ] 2.1 VISUAL x\n      url: /\n      count .a  1\n', 'utf8')
+
+  const out = execFileSync(
+    'node',
+    [cli, configPath, JSON.stringify({ spec: 90, runtime: 100, code: 80 }), tasksPath, '2'],
+    { encoding: 'utf8' },
+  )
+  const verdict = JSON.parse(out)
+  assert.equal(verdict.status, 'BLOCK', 'an unscored but applicable visual must block')
+  assert.deepEqual(verdict.unevaluated, ['visual'])
 })
