@@ -31,7 +31,15 @@ reads it back. Never touch `openspec/config.yaml` to switch tiers — it only
 sets the default for changes created without `--schema`.
 
 If `/idd:explore` already classified this work, use its verdict instead of
-re-deciding.
+re-deciding — **and do not invoke `grilling`.** `brainstorming` has just walked
+the same design tree with the user and emptied the same frontier; running the
+interview again asks them to re-decide what they settled one command ago. Write
+the proposal from the design explore validated.
+
+That is not a blanket skip. If something explore left open surfaces while you
+write — a decision it never reached, a constraint the code contradicts — ask
+that, and only that. Re-opening the settled branches is the cost being avoided;
+the unsettled ones were never the problem.
 
 ## Then
 

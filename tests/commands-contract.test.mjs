@@ -165,3 +165,21 @@ test('a rule that names a skill means invoking it, not approximating it', () => 
   assert.match(flat, /grilling/)
   assert.match(flat, /questioning UI|multiple-choice|options as choices/i)
 })
+
+test('propose does not re-interview work that explore already brainstormed', () => {
+  // brainstorming empties the same design tree grilling would. Running both asks
+  // the user to re-decide what they settled a command ago — the failure --auto
+  // was added to stop, one step earlier in the pipeline.
+  const flat = read('propose.md').replace(/\s+/g, ' ')
+  assert.match(flat, /do not (invoke|run) `?grilling`?/i)
+  assert.match(flat, /explore/)
+  // Not a blanket skip: what explore left open is still worth asking.
+  assert.match(flat, /left open|still open/i)
+})
+
+test('explore hands over the interview, not just the classification', () => {
+  // Otherwise propose has no way to know the tree was already worked.
+  const flat = read('explore.md').replace(/\s+/g, ' ')
+  assert.match(flat, /Pass your classification explicitly/)
+  assert.match(flat, /already been interviewed|interview.{0,40}already|do not re-interview/i)
+})

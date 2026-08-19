@@ -29,7 +29,11 @@ Instead, hand off according to the classification:
 | **Bounded** | Report the short design, then `/idd:propose <topic>` — which will create the change with `--schema idd-claude-lite`. |
 | **Architectural** | Report the approved design in full, then `/idd:propose <topic>` — which will create the change with `--schema idd-claude`. The design content you just validated becomes the `design.md` artifact; do not rewrite it from scratch there. |
 
-Pass your classification explicitly to `/idd:propose` so it does not re-decide.
+Pass your classification explicitly to `/idd:propose` so it does not re-decide,
+and say that the work has **already been interviewed** — otherwise it has no way
+to know, and its `grilling` rule will walk the user through the same design tree
+a second time. Hand over the design you validated, not a summary of it: what
+propose does not receive, it will ask for again.
 
 ## Visual companion
 

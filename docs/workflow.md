@@ -14,6 +14,12 @@ nothing: its output is a decision.
 remember is a gate that gets skipped. `--no-verify` stops after the
 implementation, and leaves the change unverified rather than verified-by-omission.
 
+**`/idd:explore` and `/idd:propose` do not both interview you.** Explore delegates
+to `brainstorming`, which walks the design tree with you; propose's `grilling`
+rule walks the same one. When explore ran first, it hands over its classification
+*and* its validated design, and propose skips the second interview — asking only
+about what explore left open.
+
 `/idd:propose <id> --auto` drops the confirmations: no checkpoint between
 artifacts, no "shall we proceed" once `grilling` has emptied its frontier, and
 the change folder is committed for you. It still runs the tier guard and still
