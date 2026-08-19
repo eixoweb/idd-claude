@@ -12,6 +12,26 @@ default and available on its own as `/idd:review`.
 ## 1. Structure
 
 ```
+node "${CLAUDE_PLUGIN_ROOT}/scripts/preflight-cli.mjs" <change id> .
+```
+
+Before measuring anything. Every dimension the config enables has a prerequisite
+— dev-browser on PATH, a declared `dev_stack_url`, test commands, a
+`stryker.config.json` — and this is what checks them. On a non-zero exit, report
+its `refusals` verbatim and **stop**.
+
+**Do not write `verification.md`** in that case. Nothing was measured, and a
+missing tool is a fact about the project's setup rather than a finding about the
+change; recording it as an outcome would put a verdict in the change's history
+that says nothing about the change.
+
+Without this, an enabled-but-unevaluable dimension does not disappear — it
+surfaces as `UNKNOWN`, and then as a `BLOCKED` verdict, after the browser session
+and the mutation run have already been paid for. It happened: a run with
+`mutation: true` and Stryker not installed reached `BLOCKED` at the end and had
+to improvise an install to get past it.
+
+```
 openspec validate <change id> --type change --strict --json
 ```
 

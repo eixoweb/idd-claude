@@ -78,3 +78,18 @@ test('verify says where its three dimensions come from', () => {
   assert.match(flat, /opsx:verify/)
   assert.match(flat, /advisory|does not block/i)
 })
+
+test('verify refuses to start on a dimension it cannot evaluate', () => {
+  // A real run had mutation: true with no Stryker installed. Nothing checked, so
+  // it surfaced as UNKNOWN and then BLOCKED at the end — after the browser and
+  // the test suite had already run — and the session improvised an install to
+  // get past it.
+  assert.match(verify, /preflight-cli\.mjs/)
+  assert.match(flat, /report its `refusals` verbatim/i)
+  assert.match(flat, /before .{0,40}(measur|start)/i)
+})
+
+test('a refused preflight writes no report, because nothing was measured', () => {
+  // A project missing a tool is a setup problem, not a finding about the change.
+  assert.match(flat, /do not write .{0,30}verification\.md|writes no report/i)
+})

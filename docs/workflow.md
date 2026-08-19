@@ -124,8 +124,11 @@ minutes of implementation — and then it stops being run at all.
 
 Verify does four things, and only the first and the last are ordered:
 
-1. **Structure** — `openspec validate`, every checkbox ticked, working tree
-   clean. An unfinished change is not worth measuring.
+1. **Structure** — the preflight first, so a dimension that is enabled but
+   unevaluable stops the run here rather than surfacing as `BLOCKED` once the
+   browser and the mutation run have been paid for. Then `openspec validate`
+   scoped to this change, every checkbox ticked, working tree clean. An
+   unfinished change is not worth measuring.
 2. **Measure** — one call to `verify-cli.mjs` runs every mechanical dimension the
    config enables and returns a verdict over them. Started in the background.
 3. **Judge** — Completeness, Correctness, Coherence. No code review by default:

@@ -64,8 +64,14 @@ cucumber report — all `UNKNOWN`. Silence is not evidence of failure; it is
 absence of evidence.
 
 The governing principle throughout: **a PASS obtained by skipping a dimension is
-worse than a failure, because it lies.** `/idd:apply` refuses to start when an
-enabled dimension is unevaluable, rather than degrading quietly at the end.
+worse than a failure, because it lies.** Both `/idd:apply` and `/idd:verify` run
+the preflight and refuse to start when an enabled dimension is unevaluable,
+rather than degrading quietly at the end.
+
+Verify needs its own check rather than trusting apply's: the config can change
+between the two, and verify is run on its own often enough. A real run enabled
+`mutation` after apply had passed, reached `UNKNOWN` and then `BLOCKED` at the
+very end, and had to improvise a Stryker install to get past it.
 
 ## Applicable is not the same as enabled
 
