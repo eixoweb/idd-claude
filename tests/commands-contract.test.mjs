@@ -154,3 +154,14 @@ test('propose says why the change folder is committed, not just that it is', () 
   assert.match(flat, /base ref/i)
   assert.match(flat, /root commit/i)
 })
+
+test('a rule that names a skill means invoking it, not approximating it', () => {
+  // Observed: `Must use grilling skill` reached the agent through the artifact's
+  // <rules> block, and was satisfied with the native questioning UI instead. The
+  // rounds, the recommended answer per question and the end condition were all
+  // lost — a widget substituted for the skill.
+  const flat = read('propose.md').replace(/\s+/g, ' ')
+  assert.match(flat, /names a skill.{0,40}invoke that skill/i)
+  assert.match(flat, /grilling/)
+  assert.match(flat, /questioning UI|multiple-choice|options as choices/i)
+})

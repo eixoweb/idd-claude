@@ -159,7 +159,10 @@ test('the opt-in skills stay commented, so turning one on is a choice', () => {
   // commented lines rather than absent: a project should not have to read the
   // plugin to discover what it could switch on.
   const source = defaultConfig()
-  assert.match(source, /#\s*- Must use spec-as-source skill/)
+  assert.match(source, /#\s+- Must use spec-as-source skill/)
   assert.match(source, /#\s*- Must use glossary skill/)
-  assert.equal(parse(source).rules.specs, null, 'specs must carry no active rule')
+  // Fully commented, key included: `specs:` with only a comment parses as null,
+  // and OpenSpec rejects it with "Rules for 'specs' must be an array of strings"
+  // on every instructions call.
+  assert.equal(parse(source).rules.specs, undefined, 'a null rules key is rejected by OpenSpec')
 })

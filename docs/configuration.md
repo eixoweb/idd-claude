@@ -145,8 +145,17 @@ adversarial subagent pair was not.
 something the model fires. That is why the rule names `grilling` — routing a
 model through a shim it may not invoke is a wiring that fails silently.
 
+A rule that names a skill means the skill is **invoked**, not paraphrased.
+Observed once: `Must use grilling skill` reached the agent correctly and was
+satisfied with the native questioning UI instead — losing the rounds, the
+recommended answer per question and the end condition, which is most of what
+naming the skill was for.
+
 Commented lines are opt-ins, listed rather than omitted so you can see what is
-available without reading the plugin. `spec-as-source` also pulls
+available without reading the plugin. **Comment the key too**, as above: a key
+with only a comment under it parses as `null`, and OpenSpec answers every
+`instructions` call with `Rules for 'specs' must be an array of strings,
+ignoring this artifact's rules`. `spec-as-source` also pulls
 `gherkin-authoring` and `acceptance-test-authoring`: skills reference each other,
 so turning on the first is enough.
 

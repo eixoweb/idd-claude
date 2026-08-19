@@ -39,6 +39,20 @@ Generate the artifacts in the order the schema allows, reading
 `openspec instructions <artifact> --change <id>` for each. Apply the project
 rules from `config.yaml`. Stop after each artifact and let the user read it.
 
+**A rule that names a skill means invoke that skill.** `Must use grilling skill`
+in an artifact's `<rules>` is not a suggestion to ask some questions — it is an
+instruction to load `grilling` and follow the shape it defines: the design tree
+worked in rounds, the whole settled frontier asked at once, each question
+numbered with your recommended answer beneath it, and a stated end when the
+frontier empties.
+
+Satisfying it with the native questioning UI is a substitution, not a
+translation. Rendering the options as choices loses the frontier ordering, the
+recommended answer per question and the end condition — which is most of why the
+skill is named in the first place. The same holds for every rule that names one:
+`c4-diagrams` on the design, `architectural-decision-records` on the ADR,
+`visual-verification` on the tasks.
+
 If, while writing the proposal for a bounded change, one of the architectural
 criteria turns out to apply, stop and tell the user to recreate the change
 with the full schema. It is cheap now and expensive after `tasks.md` exists.
